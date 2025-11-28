@@ -46,7 +46,7 @@ export const Editor = () => {
     async function run() {
       if (activeFolder && excalidrawAPI) {
         excalidrawAPI.setToast({
-          message: `Loading, wait ...`,
+          message: `Loading, please wait ...`,
           closable: false,
           duration: Infinity,
         });
@@ -77,7 +77,6 @@ export const Editor = () => {
     const newlyAddedFiles = fileList.filter((file) => !ids.has(file.id));
 
     const {
-      showWelcomeScreen,
       theme,
       currentChartType,
       currentItemBackgroundColor,
@@ -93,38 +92,16 @@ export const Editor = () => {
       currentItemStrokeStyle,
       currentItemStrokeWidth,
       currentItemTextAlign,
-      cursorButton,
-      penMode,
-      penDetected,
-      exportBackground,
-      exportScale,
-      exportEmbedScene,
-      exportWithDarkMode,
       gridSize,
       gridStep,
       gridModeEnabled,
-      isBindingEnabled,
-      defaultSidebarDockedPreference,
-      isLoading,
-      isResizing,
-      isRotating,
-      lastPointerDownWith,
       name,
-      scrolledOutside,
       scrollX,
       scrollY,
-      selectedElementsAreBeingDragged,
-      shouldCacheIgnoreZoom,
-      stats,
-      frameRendering,
       viewBackgroundColor,
       zenModeEnabled,
       zoom,
       viewModeEnabled,
-      showHyperlinkPopup,
-      originSnapOffset,
-      objectsSnapModeEnabled,
-      isCropping,
       offsetLeft,
       offsetTop,
     } = appState;
@@ -134,7 +111,6 @@ export const Editor = () => {
       elements,
       fileList: newlyAddedFiles,
       appState: {
-        showWelcomeScreen,
         theme,
         currentChartType,
         currentItemBackgroundColor,
@@ -150,51 +126,31 @@ export const Editor = () => {
         currentItemStrokeStyle,
         currentItemStrokeWidth,
         currentItemTextAlign,
-        cursorButton,
-        penMode,
-        penDetected,
-        exportBackground,
-        exportScale,
-        exportEmbedScene,
-        exportWithDarkMode,
         gridSize,
         gridStep,
         gridModeEnabled,
-        isBindingEnabled,
-        defaultSidebarDockedPreference,
-        isLoading,
-        isResizing,
-        isRotating,
-        lastPointerDownWith,
         name,
-        scrolledOutside,
         scrollX,
         scrollY,
-        selectedElementsAreBeingDragged,
-        shouldCacheIgnoreZoom,
-        stats,
-        frameRendering,
         viewBackgroundColor,
         zenModeEnabled,
         zoom,
         viewModeEnabled,
-        showHyperlinkPopup,
-        originSnapOffset,
-        objectsSnapModeEnabled,
-        isCropping,
         offsetLeft,
         offsetTop,
       },
       savePath,
     });
 
-    if (data.success && activeFolder === null) {
-      setActiveFolder(data.activeFolder);
+    if (data.success) {
       newlyAddedFiles.forEach((file) => ids.add(file.id));
 
-      const data2 = await window.api.getFiles(savePath);
-      if (data2.success) {
-        setTree(data2.tree);
+      if (activeFolder === null) {
+        setActiveFolder(data.activeFolder);
+        const data2 = await window.api.getFiles(savePath);
+        if (data2.success) {
+          setTree(data2.tree);
+        }
       }
     }
   };
@@ -206,6 +162,67 @@ export const Editor = () => {
     handleSave(elements, appState, files);
     setAutoSave(true);
   };
+
+  const zoom = (v) => {
+    excalidrawAPI.updateScene({
+      appState: {
+        zoom: {
+          value: v,
+        },
+        scrollToContent: true,
+      },
+    });
+  };
+
+  const selectDirection = (d) => {
+    const { selectedElementIds } = excalidrawAPI.getAppState();
+
+    if (Object.keys(selectedElementIds).length > 0) {
+      const selectedId = Object.keys(selectedElementIds)[0];
+      const elements = excalidrawAPI.getSceneElements();
+      const { x, y } = elements.find((e) => e.id === selectedId);
+
+      const seletedIds = { ...selectedElementIds };
+      elements
+        .filter((e) => {
+          if (d === "right") return e.x >= x;
+          else if (d === "left") return e.x <= x;
+          else if (d === "up") return e.y <= y;
+          else if (d === "down") return e.y >= y;
+        })
+        .forEach((e) => {
+          seletedIds[e.id] = true;
+        });
+      excalidrawAPI.updateScene({
+        appState: {
+          selectedElementIds: seletedIds,
+        },
+        captureUpdate: CaptureUpdateAction.IMMEDIATELY,
+      });
+    }
+  };
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === "n") {
+        zoom(15);
+      } else if (e.key === "m") {
+        zoom(1);
+      } else if (e.key === ",") {
+        selectDirection("left");
+      } else if (e.key === ".") {
+        selectDirection("right");
+      } else if (e.key === ";") {
+        selectDirection("up");
+      } else if (e.key === "/") {
+        selectDirection("down");
+      } else if (e.key === "b") {
+        toggleSidebar();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [excalidrawAPI]);
 
   if (loading) {
     return <Loader />;
@@ -222,7 +239,7 @@ export const Editor = () => {
           }
           timeoutId.current = setTimeout(() => {
             handleSave(elements, appState, files);
-          }, 250);
+          }, 500);
         }
       }}
     >

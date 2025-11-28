@@ -1,5 +1,10 @@
-import { ChevronRight, File, FilePlus, Folder, FolderPen } from "lucide-react";
-
+import {
+  ChevronRight,
+  FilePenLine,
+  FilePlus,
+  FolderPen,
+  Notebook,
+} from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -53,6 +58,7 @@ export function AppSidebar() {
 
   return (
     <>
+      <title>{activeFolder || "Undefined"}</title>
       <SidebarContent className="overflow-x-hidden">
         <SidebarGroup>
           <SidebarGroupLabel>Actions</SidebarGroupLabel>
@@ -106,7 +112,7 @@ function Tree({ item }) {
             setActiveFolder(name.path);
           }}
         >
-          <File />
+          <FilePenLine />
           {name.name}
         </SidebarMenuButton>
         {name.path === activeFolder && autoSave && (
@@ -125,7 +131,7 @@ function Tree({ item }) {
         <CollapsibleTrigger asChild>
           <SidebarMenuButton>
             <ChevronRight className="transition-transform" />
-            <Folder />
+            <Notebook />
             {name}
           </SidebarMenuButton>
         </CollapsibleTrigger>
