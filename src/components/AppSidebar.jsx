@@ -11,58 +11,43 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarRail,
+  SidebarMenuBadge,
 } from "@/components/ui/sidebar";
 import { useUiStore } from "../lib/store";
 
-// This is sample data.
-const data = {
-  tree: [
-    [
-      "app",
-      [
-        "api",
-        ["hello", ["route.ts"]],
-        "page.tsx",
-        "layout.tsx",
-        ["blog", ["page.tsx"]],
-      ],
-    ],
-    [
-      "components",
-      ["ui", "button.tsx", "card.tsx"],
-      "header.tsx",
-      "footer.tsx",
-    ],
-    ["lib", ["util.ts"]],
-    ["public", "favicon.ico", "vercel.svg"],
-    ".eslintrc.json",
-    ".gitignore",
-    "next.config.js",
-    "tailwind.config.js",
-    "package.json",
-    "README.md",
-  ],
-};
-
-export function AppSidebar({ ...props }) {
-  const { selectFolder, tree, savePath } = useUiStore();
+export function AppSidebar() {
+  const { selectFolder, tree, savePath, setActiveFolder, activeFolder } =
+    useUiStore();
   const actions = [
     {
-      name: "Add New",
+      name: "New",
       icon: <FilePlus />,
       onClick: () => {
-        console.log("hoi");
+        if (
+          !activeFolder &&
+          !confirm("Sure ? Unsaved progress will be lost ...")
+        ) {
+          return;
+        }
+        setActiveFolder(null);
       },
     },
     {
       name: "Open Folder",
       icon: <FolderPen />,
-      onClick: selectFolder,
+      onClick: () => {
+        if (
+          !activeFolder &&
+          !confirm("Sure ? Unsaved progress will be lost ...")
+        ) {
+          return;
+        }
+        selectFolder();
+      },
     },
   ];
 
@@ -102,20 +87,32 @@ export function AppSidebar({ ...props }) {
 
 function Tree({ item }) {
   const [name, ...items] = Array.isArray(item) ? item : [item];
-  const setActiveFolder = useUiStore((state) => state.setActiveFolder);
+  const { setActiveFolder, activeFolder, autoSave } = useUiStore();
 
   if (!items.length) {
     return (
-      <SidebarMenuButton
-        isActive={name === "button.tsx"}
-        className="data-[active=true]:bg-transparent"
-        onClick={() => {
-          setActiveFolder(name.path);
-        }}
-      >
-        <File />
-        {name.name}
-      </SidebarMenuButton>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          isActive={name.path === activeFolder}
+          className="data-[active=true]:bg-accent"
+          onClick={() => {
+            if (name.path === activeFolder) return;
+            if (
+              !activeFolder &&
+              !confirm("Sure ? Unsaved progress will be lost ...")
+            ) {
+              return;
+            }
+            setActiveFolder(name.path);
+          }}
+        >
+          <File />
+          {name.name}
+        </SidebarMenuButton>
+        {name.path === activeFolder && autoSave && (
+          <SidebarMenuBadge>A</SidebarMenuBadge>
+        )}
+      </SidebarMenuItem>
     );
   }
 

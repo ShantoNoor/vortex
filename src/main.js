@@ -96,7 +96,7 @@ ipcMain.handle("save-file", async (event, payload) => {
     if (!activeFolder) {
       const result = await dialog.showOpenDialog({
         properties: ["openDirectory", "createDirectory"],
-        defaultPath: activeFolder || savePath,
+        defaultPath: savePath,
       });
 
       if (result.canceled || !result.filePaths.length) {

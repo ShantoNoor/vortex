@@ -9,6 +9,7 @@ export const useUiStore = create(
       tree: null,
       activeFolder: null,
       autoSave: false,
+      reload: 0,
       toggleSidebar: () =>
         set((state) => ({ showSidebar: !state.showSidebar })),
       openSidebar: () => set(() => ({ showSidebar: true })),
@@ -16,7 +17,11 @@ export const useUiStore = create(
       setTree: (tree) => set(() => ({ tree })),
       setAutoSave: (autoSave) => set(() => ({ autoSave })),
       setActiveFolder: (fileName) =>
-        set(() => ({ activeFolder: fileName, autoSave: false })),
+        set((state) => ({
+          activeFolder: fileName,
+          autoSave: false,
+          reload: state.reload + 1,
+        })),
       selectFolder: async () => {
         const data = await window.api.selectFolder();
         if (data.success) {

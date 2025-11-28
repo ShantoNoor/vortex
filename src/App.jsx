@@ -26,13 +26,13 @@ export default function App() {
 
   return (
     <SidebarProvider>
-      <ResizablePanelGroup direction="horizontal" className="min-h-[100dvh]">
+      <ResizablePanelGroup direction="horizontal" className="min-h-dvh">
         {showSidebar && (
           <>
-            <ResizablePanel id="sidebar" defaultSize={25} order={1}>
+            <ResizablePanel className="bg-[#111]" id="sidebar" defaultSize={25} order={1}>
               <AppSidebar />
             </ResizablePanel>
-            <ResizableHandle className="bg-[#333]" />
+            <ResizableHandle />
           </>
         )}
         <ResizablePanel id="main" order={2}>

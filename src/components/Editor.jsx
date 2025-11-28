@@ -2,13 +2,14 @@ import {
   Excalidraw,
   MainMenu,
   CaptureUpdateAction,
+  Footer,
 } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
-import { Folder, FolderPen, PanelRightClose, Save } from "lucide-react";
+import { PanelRightClose, Save, Sidebar } from "lucide-react";
 import { useUiStore } from "../lib/store";
 import { useEffect, useRef, useState } from "react";
 import { Loader } from "./Loader";
-import { StartScreen } from "./StartScreen";
+import { Button } from "./ui/button";
 
 const initialData = {
   appState: { viewBackgroundColor: "#222" },
@@ -21,14 +22,13 @@ export const Editor = () => {
 
   const {
     toggleSidebar,
-    setSavePath,
     setTree,
     activeFolder,
     setActiveFolder,
     savePath,
     autoSave,
     setAutoSave,
-    selectFolder,
+    reload,
   } = useUiStore();
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export const Editor = () => {
     setTimeout(() => {
       setLoading(false);
     }, 10);
-  }, [activeFolder]);
+  }, [activeFolder, reload]);
 
   useEffect(() => {
     async function run() {
@@ -71,6 +71,10 @@ export const Editor = () => {
 
     if (data.success && activeFolder === null) {
       setActiveFolder(data.activeFolder);
+      const data2 = await window.api.getFiles(savePath);
+      if (data2.success) {
+        setTree(data2.tree);
+      }
     }
   };
 
@@ -81,10 +85,6 @@ export const Editor = () => {
     handleSave(elements, appState, files);
     setAutoSave(true);
   };
-
-  if (!activeFolder) {
-    return <StartScreen />;
-  }
 
   if (loading) {
     return <Loader />;
@@ -106,9 +106,6 @@ export const Editor = () => {
       }}
     >
       <MainMenu>
-        <MainMenu.Item icon={<FolderPen />} onClick={selectFolder}>
-          Open Folder
-        </MainMenu.Item>
         <MainMenu.Item icon={<Save />} onClick={saveFile}>
           Save
         </MainMenu.Item>
@@ -118,6 +115,11 @@ export const Editor = () => {
         <MainMenu.Separator />
         <MainMenu.DefaultItems.ChangeCanvasBackground />
       </MainMenu>
+      <Footer>
+        <Button className="ml-2 p-4" variant="outline" onClick={toggleSidebar}>
+          <Sidebar className="size-4" />
+        </Button>
+      </Footer>
     </Excalidraw>
   );
 };
