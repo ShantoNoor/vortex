@@ -17,16 +17,28 @@ import { useUiStore } from "../lib/store";
 import { useEffect, useRef, useState } from "react";
 import { Loader } from "./Loader";
 import { Button } from "./ui/button";
-import { fileToBase64, generateUUID, getImageDimensions } from "../lib/utils";
+import {
+  fileToBase64,
+  generateUUID,
+  getCanvasBlob,
+  getImageDimensions,
+} from "../lib/utils";
 import imageCompression from "browser-image-compression";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import * as pdfjsLib from "pdfjs-dist";
+import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+pdfjsLib.GlobalWorkerOptions.enableWebGL = true;
+const chunkWidth = 2000;
 
 let ids = new Set([]);
 
@@ -39,7 +51,7 @@ export const Editor = () => {
   const imagesOpenRef = useRef(null);
   const [excalidrawAPI, setExcalidrawAPI] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [pdfOpen, setPdfOpen] = useState(true);
+  const [pdfOpen, setPdfOpen] = useState(false);
 
   const {
     toggleSidebar,
@@ -111,7 +123,6 @@ export const Editor = () => {
       gridSize,
       gridStep,
       gridModeEnabled,
-      name,
       scrollX,
       scrollY,
       viewBackgroundColor,
@@ -344,16 +355,90 @@ export const Editor = () => {
     insertImages(files);
   };
 
-  const handlePDFImport = (e) => {
+  const handlePDFImport = async (e) => {
     setPdfOpen(false);
     e.preventDefault();
 
     const form = e.target;
     const file = form.pdfFile.files[0];
-    const segmentPerPage = form.segmentPerPage.value;
+    const numSegments = form.segmentPerPage.value;
 
-    console.log("FILE:", file);
-    console.log("Segments:", segmentPerPage);
+    if (file === undefined) {
+      excalidrawAPI.setToast({
+        message: "No file selected",
+        closable: true,
+        duration: 2000,
+      });
+      return;
+    }
+
+    excalidrawAPI.setToast({
+      message: "Importing pdf ...",
+      closable: false,
+      duration: Infinity,
+    });
+
+    const images = [];
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+
+      const numPages = pdf.numPages;
+
+      for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const { width: pdf_width } = page.getViewport({
+          scale: 1,
+        });
+
+        const scale = chunkWidth / pdf_width;
+        const viewport = page.getViewport({ scale });
+
+        const totalHeight = viewport.height;
+        const totalWidth = viewport.width;
+
+        const chunkHeight = totalHeight / numSegments;
+
+        for (let i = 0; i < numSegments; i++) {
+          const segmentCanvas = document.createElement("canvas");
+          const ctx = segmentCanvas.getContext("2d");
+          const segmentHeight = Math.min(
+            chunkHeight,
+            totalHeight - i * chunkHeight
+          );
+
+          segmentCanvas.width = totalWidth;
+          segmentCanvas.height = segmentHeight;
+
+          const transform = [1, 0, 0, 1, 0, Math.ceil(-i * chunkHeight)];
+
+          await page.render({
+            canvasContext: ctx,
+            viewport: viewport,
+            transform: transform,
+          }).promise;
+
+          images.push(await getCanvasBlob(segmentCanvas, "image/jpeg"));
+        }
+      }
+
+      excalidrawAPI.setToast({
+        message: `PDF loaded! ${numPages} pages.`,
+        closable: true,
+        duration: 2000,
+      });
+      await insertImages(images, 0);
+    } catch (error) {
+      console.error("Error loading PDF:", error);
+      excalidrawAPI.setToast({
+        message: "Failed to load PDF.",
+        closable: true,
+        duration: 2000,
+      });
+    }
   };
 
   useEffect(() => {
@@ -470,10 +555,16 @@ export const Editor = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Import PDF</DialogTitle>
+            <DialogDescription>Select a PDF File</DialogDescription>
           </DialogHeader>
           <form className="space-y-2" onSubmit={handlePDFImport}>
             <Label>Select PDF File</Label>
-            <Input name="pdfFile" type="file" id="SelectPDF" />
+            <Input
+              name="pdfFile"
+              type="file"
+              id="SelectPDF"
+              accept="application/pdf"
+            />
             <Label htmlFor="SegmentPerPage">Segment Par Page</Label>
             <Input
               name="segmentPerPage"

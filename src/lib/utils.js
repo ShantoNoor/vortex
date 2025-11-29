@@ -62,3 +62,19 @@ export function getImageDimensions(dataURL) {
     img.src = dataURL;
   });
 }
+
+export function getCanvasBlob(canvas, mimeType = "image/png", quality = 0.9) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error("Canvas to Blob conversion failed."));
+        }
+      },
+      mimeType,
+      quality
+    );
+  });
+}

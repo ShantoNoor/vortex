@@ -8,6 +8,7 @@
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "rm -rf out && electron-forge make",
+    "reinstall": "rm -rf out && electron-forge make && sudo rpm -e vortex-desktop-1.0.0-1.fc43.x86_64 && sudo rpm -i /home/shanto/Downloads/vortex-desktop/out/make/rpm/x64/vortex-desktop-1.0.0-1.x86_64.rpm",
     "publish": "electron-forge publish",
     "lint": "echo \"No linting configured\""
   },
@@ -46,6 +47,7 @@
     "clsx": "^2.1.1",
     "electron-squirrel-startup": "^1.0.1",
     "lucide-react": "^0.555.0",
+    "pdfjs-dist": "^5.4.394",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.67.0",
