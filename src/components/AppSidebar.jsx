@@ -21,7 +21,9 @@ import {
   SidebarMenuSub,
   SidebarRail,
   SidebarMenuBadge,
+  SidebarProvider,
 } from "@/components/ui/sidebar";
+
 import { useUiStore } from "../lib/store";
 
 export function AppSidebar() {
@@ -59,34 +61,36 @@ export function AppSidebar() {
   return (
     <>
       <title>{activeFolder || "Undefined"}</title>
-      <SidebarContent className="overflow-x-hidden h-dvh no-scrollbar">
-        <SidebarGroup>
-          <SidebarGroupLabel>Actions</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="min-w-screen">
-              {actions.map((item, index) => (
-                <SidebarMenuItem key={index} onClick={item.onClick}>
-                  <SidebarMenuButton>
-                    {item.icon}
-                    {item.name}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        <SidebarGroup className="">
-          <SidebarGroupLabel>{savePath}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="min-w-screen">
-              {tree?.map((item, index) => (
-                <Tree key={index} item={item} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-      <SidebarRail />
+      <SidebarProvider>
+        <SidebarContent className="overflow-x-hidden h-dvh no-scrollbar">
+          <SidebarGroup>
+            <SidebarGroupLabel>Actions</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="min-w-screen">
+                {actions.map((item, index) => (
+                  <SidebarMenuItem key={index} onClick={item.onClick}>
+                    <SidebarMenuButton>
+                      {item.icon}
+                      {item.name}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          <SidebarGroup className="">
+            <SidebarGroupLabel>{savePath}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="min-w-screen">
+                {tree?.map((item, index) => (
+                  <Tree key={index} item={item} />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarRail />
+      </SidebarProvider>
     </>
   );
 }

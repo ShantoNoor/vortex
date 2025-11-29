@@ -40,6 +40,7 @@ export const Editor = () => {
     autoSave,
     setAutoSave,
     reload,
+    setLoading: setLoader,
   } = useUiStore();
 
   useEffect(() => {
@@ -54,11 +55,7 @@ export const Editor = () => {
   useEffect(() => {
     async function run() {
       if (activeFolder && excalidrawAPI) {
-        excalidrawAPI.setToast({
-          message: `Loading, please wait ...`,
-          closable: false,
-          duration: Infinity,
-        });
+        setLoader(true);
 
         const data = await window.api.openFile(activeFolder);
 
@@ -75,7 +72,7 @@ export const Editor = () => {
         }
 
         setAutoSave(true);
-        excalidrawAPI.setToast(null);
+        setLoader(false);
       }
     }
     run();

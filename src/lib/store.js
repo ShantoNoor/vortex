@@ -10,6 +10,7 @@ export const useUiStore = create(
       activeFolder: null,
       autoSave: false,
       reload: 0,
+      loading: false,
       toggleSidebar: () =>
         set((state) => ({ showSidebar: !state.showSidebar })),
       openSidebar: () => set(() => ({ showSidebar: true })),
@@ -32,6 +33,7 @@ export const useUiStore = create(
           });
         }
       },
+      setLoading: (loading) => set(() => ({ loading })),
     }),
     {
       name: "vortex-ui-states",

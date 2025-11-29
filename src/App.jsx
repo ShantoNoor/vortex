@@ -6,11 +6,11 @@ import {
 import { Editor } from "./components/Editor";
 import { useUiStore } from "./lib/store";
 import { AppSidebar } from "./components/AppSidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { useEffect } from "react";
+import { Loader } from "./components/Loader";
 
 export default function App() {
-  const { showSidebar, setTree, savePath } = useUiStore();
+  const { showSidebar, setTree, savePath, loading } = useUiStore();
 
   useEffect(() => {
     async function run() {
@@ -25,8 +25,12 @@ export default function App() {
   }, []);
 
   return (
-    <SidebarProvider>
-      <ResizablePanelGroup direction="horizontal" className="min-h-dvh">
+    <>
+      <ResizablePanelGroup
+        autoSaveId="persistence"
+        direction="horizontal"
+        className="min-h-dvh"
+      >
         {showSidebar && (
           <>
             <ResizablePanel
@@ -44,6 +48,11 @@ export default function App() {
           <Editor />
         </ResizablePanel>
       </ResizablePanelGroup>
-    </SidebarProvider>
+      {loading && (
+        <div className="absolute inset-0 z-10">
+          <Loader />
+        </div>
+      )}
+    </>
   );
 }
