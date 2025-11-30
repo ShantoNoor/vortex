@@ -458,9 +458,9 @@ export const Editor = () => {
         zoom(15);
       } else if (e.key === "m") {
         zoom(1);
-      } else if (e.key === "," || e.key === "z") {
+      } else if (e.key === ",") {
         selectDirection("left");
-      } else if (e.key === "." || e.key === "c") {
+      } else if (e.key === ".") {
         selectDirection("right");
       } else if (e.key === ";") {
         selectDirection("up");
