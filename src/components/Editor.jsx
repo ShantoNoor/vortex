@@ -35,6 +35,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import * as pdfjsLib from "pdfjs-dist";
 import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import { CopyButton } from "./CopyButton";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 pdfjsLib.GlobalWorkerOptions.enableWebGL = true;
@@ -77,6 +78,11 @@ export const Editor = () => {
   useEffect(() => {
     async function run() {
       if (activeFolder && excalidrawAPI) {
+        excalidrawAPI.setToast({
+          message: `Loading, please wait ...`,
+          closable: false,
+          duration: Infinity,
+        });
         setLoader(true);
 
         const data = await window.api.openFile(activeFolder);
@@ -94,6 +100,7 @@ export const Editor = () => {
         }
 
         setAutoSave(true);
+        excalidrawAPI.setToast(null);
         setLoader(false);
       }
     }
@@ -372,7 +379,7 @@ export const Editor = () => {
 
     const form = e.target;
     const file = form.pdfFile.files[0];
-    const numSegments = form.segmentPerPage.value;
+    let numSegments = Number(form.segmentPerPage.value);
 
     if (file === undefined) {
       excalidrawAPI.setToast({
@@ -388,6 +395,8 @@ export const Editor = () => {
       closable: false,
       duration: Infinity,
     });
+
+    setLoader(true);
 
     const images = [];
 
@@ -411,7 +420,16 @@ export const Editor = () => {
         const totalHeight = viewport.height;
         const totalWidth = viewport.width;
 
-        const chunkHeight = totalHeight / numSegments;
+        const chunkHeight =
+          numSegments === 0 ? 1130.65 : totalHeight / numSegments;
+
+        if (numSegments === 0)
+          numSegments = Math.ceil(totalHeight / chunkHeight);
+
+        console.log({
+          numSegments,
+          chunkHeight,
+        });
 
         for (let i = 0; i < numSegments; i++) {
           const segmentCanvas = document.createElement("canvas");
@@ -442,7 +460,9 @@ export const Editor = () => {
         duration: 2000,
       });
       await insertImages(images, 0);
+      setLoader(false);
     } catch (error) {
+      setLoader(false);
       console.error("Error loading PDF:", error);
       excalidrawAPI.setToast({
         message: "Failed to load PDF.",
@@ -501,23 +521,17 @@ export const Editor = () => {
         }}
         validateEmbeddable={(link) => true}
         renderEmbeddable={(element, appState) => {
-          if (element.link.includes("https://youtu.be/")) {
-            return (
-              <iframe
-                width={"100%"}
-                height={"100%"}
-                src={`https://www.youtube.com/embed/${element.link.split("/").pop()}`}
-              ></iframe>
-            );
-          }
-
           if (element.link.endsWith(".mp4")) {
             return <video src={element.link} controls></video>;
           }
 
           return (
-            <div className="h-full w-full flex justify-center items-center text-3xl">
-              Unable to Embed
+            <div className="h-full w-full flex flex-col justify-center items-center text-4xl">
+              <p>Unable to Embed</p>
+              <p className="">
+                {element.link}
+                <CopyButton value={element.link} />
+              </p>
             </div>
           );
         }}
@@ -610,7 +624,7 @@ export const Editor = () => {
               type="number"
               id="SegmentPerPage"
               defaultValue={1}
-              min={1}
+              min={0}
             />
             <Button className="mt-2 w-full" variant="outline" type="submit">
               Import
