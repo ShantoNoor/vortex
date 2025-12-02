@@ -276,7 +276,7 @@ export const Editor = () => {
 
   const insertImage = async (file, x, y, gap) => {
     const options = {
-      maxSizeMB: 0.5,
+      maxSizeMB: 1,
       useWebWorker: true,
     };
 
