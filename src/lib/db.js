@@ -34,7 +34,7 @@ export function getRecord(id) {
 }
 
 export function getAllRecords() {
-  const stmt = db.prepare(`SELECT * FROM items ORDER BY id DESC`);
+  const stmt = db.prepare(`SELECT * FROM items ORDER BY tag ASC`);
   return stmt.all();
 }
 

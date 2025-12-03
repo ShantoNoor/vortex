@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useUiStore } from "../lib/store";
 
-const TagViewer = ({ activeFolder, scrollTo }) => {
+const TagViewer = ({ activeFolder }) => {
   const [tags, setTags] = useState([]);
+  const setScrollElement = useUiStore((state) => state.setScrollElement);
 
   useEffect(() => {
     (async function () {
@@ -24,7 +26,7 @@ const TagViewer = ({ activeFolder, scrollTo }) => {
           key={t.id}
           className="h-8 border px-2 py-1 rounded-md cursor-pointer hover:border-blue-400 transition-colors"
           onClick={() => {
-            scrollTo(t.element);
+            setScrollElement(t.element);
           }}
         >
           <p>{t.tag}</p>

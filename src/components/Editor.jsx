@@ -61,6 +61,7 @@ export const Editor = () => {
 
   const {
     toggleSidebar,
+    toggleRightSidebar,
     setTree,
     activeFolder,
     setActiveFolder,
@@ -69,13 +70,18 @@ export const Editor = () => {
     setAutoSave,
     reload,
     setLoading: setLoader,
+    scrollElement,
+    setScrollElement,
   } = useUiStore();
 
-  const scrollTo = (element) => {
-    excalidrawAPI.scrollToContent(element, {
-      fitToContent: true,
-    });
-  };
+  useEffect(() => {
+    if (scrollElement && autoSave) {
+      excalidrawAPI.scrollToContent(scrollElement, {
+        fitToContent: true,
+      });
+      setScrollElement(null);
+    }
+  }, [scrollElement, autoSave]);
 
   useEffect(() => {
     setLoading(true);
@@ -536,6 +542,8 @@ export const Editor = () => {
         unlockAllElements();
       } else if (e.key === "j") {
         openTagWindow();
+      } else if (e.key === "u") {
+        toggleRightSidebar();
       }
     };
     window.addEventListener("keydown", handler);
@@ -645,7 +653,7 @@ export const Editor = () => {
               />
             </Sidebar.Tab>
             <Sidebar.Tab tab="tag-viewer">
-              <TagViewer activeFolder={activeFolder} scrollTo={scrollTo} />
+              <TagViewer activeFolder={activeFolder} />
             </Sidebar.Tab>
           </Sidebar.Tabs>
         </Sidebar>
