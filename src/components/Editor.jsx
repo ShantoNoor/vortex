@@ -37,6 +37,8 @@ import { Label } from "./ui/label";
 import * as pdfjsLib from "pdfjs-dist";
 import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { CopyButton } from "./CopyButton";
+import TagManager from "./TagManager";
+import TagViewer from "./TagViewer";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 pdfjsLib.GlobalWorkerOptions.enableWebGL = true;
@@ -51,11 +53,11 @@ const initialData = {
 export const Editor = () => {
   const timeoutId = useRef("");
   const imagesOpenRef = useRef(null);
-  const tagRef = useRef(null);
   const [excalidrawAPI, setExcalidrawAPI] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pdfOpen, setPdfOpen] = useState(false);
   const [selectedElementId, setSelectedElementId] = useState(null);
+  const [tabHeader, setTabHeader] = useState("");
 
   const {
     toggleSidebar,
@@ -68,6 +70,12 @@ export const Editor = () => {
     reload,
     setLoading: setLoader,
   } = useUiStore();
+
+  const scrollTo = (element) => {
+    excalidrawAPI.scrollToContent(element, {
+      fitToContent: true,
+    });
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -496,7 +504,11 @@ export const Editor = () => {
     const selectedElementIdsArray = Object.keys(selectedElementIds);
     if (selectedElementIdsArray.length === 1) {
       setSelectedElementId(selectedElementIdsArray[0]);
-      excalidrawAPI.toggleSidebar({ name: "tag", tab: "one" });
+      setTabHeader(selectedElementIdsArray[0]);
+      excalidrawAPI.toggleSidebar({ name: "tag", tab: "tag-manager" });
+    } else {
+      setTabHeader("All Tags");
+      excalidrawAPI.toggleSidebar({ name: "tag", tab: "tag-viewer" });
     }
   };
 
@@ -623,13 +635,18 @@ export const Editor = () => {
           <MainMenu.Separator />
           <MainMenu.DefaultItems.ChangeCanvasBackground />
         </MainMenu>
-        <Sidebar name="tag">
-          <Sidebar.Header>{selectedElementId}</Sidebar.Header>
+        <Sidebar name="tag" className="bg-[#111]!">
+          <Sidebar.Header>{tabHeader}</Sidebar.Header>
           <Sidebar.Tabs style={{ padding: "0.5rem" }}>
-            <Sidebar.Tab tab="one">hi</Sidebar.Tab>
-            {/* <Sidebar.TabTriggers>
-              <Sidebar.TabTrigger tab="one">Add Date</Sidebar.TabTrigger>
-            </Sidebar.TabTriggers> */}
+            <Sidebar.Tab tab="tag-manager">
+              <TagManager
+                selectedElementId={selectedElementId}
+                activeFolder={activeFolder}
+              />
+            </Sidebar.Tab>
+            <Sidebar.Tab tab="tag-viewer">
+              <TagViewer activeFolder={activeFolder} scrollTo={scrollTo} />
+            </Sidebar.Tab>
           </Sidebar.Tabs>
         </Sidebar>
         <Footer>

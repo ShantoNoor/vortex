@@ -3,6 +3,17 @@ import fs from "fs/promises";
 import path from "node:path";
 import started from "electron-squirrel-startup";
 import { addFiles, getFiles } from "./lib/imagefs";
+import {
+  createRecord,
+  deleteRecord,
+  getAllRecords,
+  getByElement,
+  getByFolder,
+  getByTag,
+  getRecord,
+  initDB,
+  updateRecord,
+} from "./lib/db";
 
 if (started) {
   app.quit();
@@ -73,6 +84,8 @@ ipcMain.handle("select-folder", async () => {
 
   try {
     const files = await readDirRecursive(folderPath);
+    initDB(path.join(folderPath, `${path.basename(folderPath)}.db`));
+
     return { success: true, tree: files, path: folderPath };
   } catch (err) {
     return { success: false, error: err.message };
@@ -82,6 +95,8 @@ ipcMain.handle("select-folder", async () => {
 ipcMain.handle("get-files", async (event, folderPath) => {
   try {
     const files = await readDirRecursive(folderPath);
+    initDB(path.join(folderPath, `${path.basename(folderPath)}.db`));
+
     return { success: true, tree: files };
   } catch (err) {
     return { success: false, error: err.message };
@@ -189,9 +204,22 @@ export async function readDirRecursive(dir) {
         result.push([item.name, ...children]);
       }
     } else {
-      result.push({ name: item.name, path: fullPath });
+      if (item.name.endsWith(".json"))
+        result.push({ name: item.name, path: fullPath });
     }
   }
 
   return result;
 }
+
+ipcMain.handle("db:create", (_, data) => createRecord(data));
+ipcMain.handle("db:get", (_, id) => getRecord(id));
+ipcMain.handle("db:all", () => getAllRecords());
+ipcMain.handle("db:update", (_, id, data) => updateRecord(id, data));
+ipcMain.handle("db:delete", (_, id) => deleteRecord(id));
+
+ipcMain.handle("db:getByTag", (_, tag) => getByTag(tag));
+ipcMain.handle("db:getByElement", (_, element) => getByElement(element));
+ipcMain.handle("db:getByFolder", (_, activeFolder) =>
+  getByFolder(activeFolder)
+);
