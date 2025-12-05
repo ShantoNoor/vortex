@@ -13,8 +13,10 @@ const TagSidebar = () => {
 
   useEffect(() => {
     (async function () {
-      const res = await window.api.relativePath(savePath, activeFolder);
-      setRelativeActiveFolder(res);
+      if (activeFolder && savePath) {
+        const res = await window.api.relativePath(savePath, activeFolder);
+        setRelativeActiveFolder(res);
+      }
     })();
   }, [activeFolder]);
 
