@@ -79,21 +79,33 @@ export function getByFolder({ activeFolder, savePath }) {
 }
 
 export async function searchTagContains(text) {
-  const words = text
-    .trim()
-    .split(/\s+/)
-    .map((w) => `%${w.toLowerCase()}%`);
+  const groups = text
+    .split("||")
+    .map((group) =>
+      group
+        .trim()
+        .split(/\s+/)
+        .map((w) => `%${w.toLowerCase()}%`)
+    )
+    .filter((g) => g.length > 0);
 
-  const conditions = words.map(() => `LOWER(tag) LIKE ?`).join(" AND ");
+  const orBlocks = groups
+    .map((groupWords) => {
+      const andBlock = groupWords.map(() => `LOWER(tag) LIKE ?`).join(" AND ");
+      return `(${andBlock})`;
+    })
+    .join(" OR ");
 
   const stmt = db.prepare(`
     SELECT *
     FROM items
-    WHERE ${conditions}
+    WHERE ${orBlocks}
     ORDER BY LOWER(tag) ASC
   `);
 
-  return stmt.all(...words);
+  const flatWords = groups.flat();
+
+  return stmt.all(...flatWords);
 }
 
 export async function searchTagInActiveFolder({
@@ -103,22 +115,35 @@ export async function searchTagInActiveFolder({
 }) {
   const relativeActiveFolder = path.relative(savePath, activeFolder);
 
-  const words = text
-    .trim()
-    .split(/\s+/)
-    .map((w) => `%${w.toLowerCase()}%`);
+  const groups = text
+    .split("||")
+    .map((group) =>
+      group
+        .trim()
+        .split(/\s+/)
+        .map((w) => `%${w.toLowerCase()}%`)
+    )
+    .filter((g) => g.length > 0);
 
-  const conditions = words.map(() => `LOWER(tag) LIKE ?`).join(" AND ");
+  const orBlocks = groups
+    .map((groupWords) => {
+      const andBlock = groupWords.map(() => `LOWER(tag) LIKE ?`).join(" AND ");
+
+      return `(${andBlock})`;
+    })
+    .join(" OR ");
 
   const stmt = db.prepare(`
     SELECT *
     FROM items
     WHERE activeFolder = ?
-      AND ${conditions}
+      AND (${orBlocks})
     ORDER BY LOWER(tag) ASC
   `);
 
-  return stmt.all(relativeActiveFolder, ...words);
+  const flatWords = groups.flat();
+
+  return stmt.all(relativeActiveFolder, ...flatWords);
 }
 
 export function cleanupDeletedFolders(savePath) {

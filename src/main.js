@@ -28,6 +28,7 @@ const createWindow = () => {
 
   // Create the browser window.
   const mainWindow = new BrowserWindow({
+    show: false,
     width: 1400,
     height: 800,
     backgroundColor: "#222",
@@ -35,6 +36,11 @@ const createWindow = () => {
       preload: path.join(__dirname, "preload.js"),
       webviewTag: true,
     },
+  });
+
+  mainWindow.once("ready-to-show", () => {
+    mainWindow.maximize();
+    mainWindow.show();
   });
 
   // and load the index.html of the app.
