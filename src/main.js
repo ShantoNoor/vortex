@@ -204,7 +204,7 @@ export async function readDirRecursive(dir) {
   for (const item of items) {
     const fullPath = path.join(dir, item.name);
 
-    if (item.name === "images") {
+    if (item.name.startsWith(".") || item.name === "images") {
       continue;
     }
 
