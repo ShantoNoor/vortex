@@ -58,7 +58,6 @@ export const Editor = () => {
   const [pdfOpen, setPdfOpen] = useState(false);
   const [selectedElementId, setSelectedElementId] = useState(null);
   const [tabHeader, setTabHeader] = useState("");
-  const [disableKey, setDisableKey] = useState(false);
 
   const {
     toggleSidebar,
@@ -524,7 +523,12 @@ export const Editor = () => {
 
   useEffect(() => {
     const handler = (e) => {
-      if (!disableKey) {
+      const isTyping =
+        e.target.tagName === "INPUT" ||
+        e.target.tagName === "TEXTAREA" ||
+        e.target.isContentEditable;
+
+      if (!isTyping) {
         if (e.key === "n") {
           zoom(15);
         } else if (e.key === "m") {
@@ -554,7 +558,7 @@ export const Editor = () => {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [excalidrawAPI, disableKey]);
+  }, [excalidrawAPI]);
 
   if (loading) {
     return <Loader />;
@@ -574,9 +578,6 @@ export const Editor = () => {
               handleSave(elements, appState, files);
             }, 500);
           }
-
-          const isTagSidebarOpen = appState.openSidebar?.tab === "tag-manager";
-          setDisableKey(isTagSidebarOpen);
         }}
         validateEmbeddable={(link) => true}
         renderEmbeddable={(element, appState) => {
