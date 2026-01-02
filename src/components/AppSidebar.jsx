@@ -118,9 +118,9 @@ function Tree({ item }) {
           <FilePenLine />
           {name.name}
         </SidebarMenuButton>
-        {name.path === activeFolder && autoSave && (
+        {/* {name.path === activeFolder && autoSave && (
           <SidebarMenuBadge>A</SidebarMenuBadge>
-        )}
+        )} */}
       </SidebarMenuItem>
     );
   }
@@ -129,10 +129,13 @@ function Tree({ item }) {
     <SidebarMenuItem>
       <Collapsible
         className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
-        defaultOpen={true}
+        defaultOpen={activeFolder?.includes(name)}
       >
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton>
+          <SidebarMenuButton
+            isActive={activeFolder?.includes(name)}
+            className="data-[active=true]:text-orange-400! data-[active=true]:bg-transparent! data-[active=true]:hover:bg-accent!"
+          >
             <ChevronRight className="transition-transform" />
             <Notebook />
             {name}
