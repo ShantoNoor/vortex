@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "cp -r ../electron-app/src/core-lib/ core-lib/ && node --watch server.js",
     "start": "node server.js",
-    "cp": "cp -r ../electron-app/src/core-lib/ core-lib/"
+    "cp": "cp -r ../electron-app/src/core-lib/ ./"
   },
   "keywords": [],
   "author": "Shanto Noor",

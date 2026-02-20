@@ -1,11 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu } from "electron";
-import fs from "fs/promises";
 import path from "node:path";
 import started from "electron-squirrel-startup";
-import { addFiles, getFiles } from "./core-lib/imagefs.js";
 import {
-  cleanupDeletedFolders,
-  cleanupFolderElements,
   createRecord,
   deleteRecord,
   getAllRecords,
@@ -13,12 +9,11 @@ import {
   getByFolder,
   getByTag,
   getRecord,
-  initDB,
   searchTagContains,
   searchTagInActiveFolder,
   updateRecord,
 } from "./core-lib/db.js";
-import { readDirRecursive } from "./core-lib/fs-helper.js";
+import { selectFolder, getFilesfs, saveFile, openFile, joinPath, relativePath } from "./core-lib/fs-helper.js";
 
 if (started) {
   app.quit();
@@ -95,35 +90,16 @@ ipcMain.handle("select-folder", async () => {
 
   const folderPath = result.filePaths[0];
 
-  try {
-    const files = await readDirRecursive(folderPath);
-    initDB(path.join(folderPath, `${path.basename(folderPath)}.db`));
-
-    return { success: true, tree: files, path: folderPath };
-  } catch (err) {
-    console.error(err);
-    return { success: false, error: err.message };
-  }
+  return await selectFolder(folderPath)
 });
 
-ipcMain.handle("get-files", async (event, folderPath) => {
-  try {
-    const files = await readDirRecursive(folderPath);
-    initDB(path.join(folderPath, `${path.basename(folderPath)}.db`));
-    cleanupDeletedFolders(folderPath);
-
-    return { success: true, tree: files };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
-});
+ipcMain.handle("get-files", async (event, folderPath) => await getFilesfs(folderPath));
 
 ipcMain.handle("save-file", async (event, payload) => {
-  let { activeFolder, elements, appState, fileList, savePath } = payload;
+  let { activeFolder, savePath } = payload;
 
-  try {
-    // 1️⃣ If no active folder, let user choose
-    if (!activeFolder) {
+  if (!activeFolder) {
+    try {
       const result = await dialog.showOpenDialog({
         properties: ["openDirectory", "createDirectory"],
         defaultPath: savePath,
@@ -134,71 +110,17 @@ ipcMain.handle("save-file", async (event, payload) => {
       }
 
       activeFolder = result.filePaths[0];
+    } catch (error) {
+      console.error("Failed to save file:", error);
+      // Return the error to the renderer so the UI can show a notification
+      return { success: false, error: error.message };
     }
-
-    // 3️⃣ Save drawing.json
-    const filePath = path.join(
-      activeFolder,
-      `${path.basename(activeFolder)}.json`,
-    );
-
-    const fileContent = JSON.stringify(
-      {
-        elements,
-        appState: { ...appState, name: path.basename(activeFolder) },
-      },
-      null,
-      2,
-    );
-
-    await fs.writeFile(filePath, fileContent, "utf-8");
-
-    await addFiles(fileList, activeFolder);
-
-    return { success: true, activeFolder };
-  } catch (error) {
-    console.error("Failed to save file:", error);
-    // Return the error to the renderer so the UI can show a notification
-    return { success: false, error: error.message };
   }
+
+  return await saveFile({...payload, activeFolder})
 });
 
-ipcMain.handle("open-file", async (event, { activeFolder, savePath }) => {
-  try {
-    // 3️⃣ Save drawing.json
-    const filePath = path.join(
-      activeFolder,
-      `${path.basename(activeFolder)}.json`,
-    );
-
-    const backupPath = path.join(
-      activeFolder,
-      `${path.basename(activeFolder)}.backup.json`,
-    );
-
-    await fs.copyFile(filePath, backupPath);
-
-    const fileContent = await fs.readFile(filePath, "utf-8");
-    const data = JSON.parse(fileContent);
-    const { elements: allElements, appState } = data;
-    const elements = allElements.filter((el) => !el.isDeleted);
-
-    const allElementIds = elements.map((e) => e.id);
-    cleanupFolderElements(savePath, activeFolder, allElementIds);
-
-    const idList = elements
-      .filter((e) => e.type === "image")
-      .map((e) => e.fileId);
-
-    const files = await getFiles(idList, activeFolder);
-
-    return { success: true, elements, appState, files, idList };
-  } catch (error) {
-    console.error("Failed to open file:", error);
-    // Return the error to the renderer so the UI can show a notification
-    return { success: false, error: error.message };
-  }
-});
+ipcMain.handle("open-file", async (event, payload) => await openFile(payload));
 
 ipcMain.handle("db:create", (_, data) => createRecord(data));
 ipcMain.handle("db:get", (_, id) => getRecord(id));
@@ -214,7 +136,5 @@ ipcMain.handle("db:search-tag-activeFolder", (_, data) =>
   searchTagInActiveFolder(data),
 );
 
-ipcMain.handle("path:join", (_, data) => path.join(...data));
-ipcMain.handle("path:relative", (_, savePath, activeFolder) =>
-  path.relative(savePath, activeFolder),
-);
+ipcMain.handle("path:join", (_, data) => joinPath(data));
+ipcMain.handle("path:relative", (_, savePath, activeFolder) => relativePath(savePath, activeFolder));
