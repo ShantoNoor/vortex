@@ -2,7 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, Menu } from "electron";
 import fs from "fs/promises";
 import path from "node:path";
 import started from "electron-squirrel-startup";
-import { addFiles, getFiles } from "./lib/imagefs";
+import { addFiles, getFiles } from "./core-lib/imagefs.js";
 import {
   cleanupDeletedFolders,
   cleanupFolderElements,
@@ -17,7 +17,8 @@ import {
   searchTagContains,
   searchTagInActiveFolder,
   updateRecord,
-} from "./lib/db";
+} from "./core-lib/db.js";
+import { readDirRecursive } from "./core-lib/fs-helper.js";
 
 if (started) {
   app.quit();
@@ -48,7 +49,7 @@ const createWindow = () => {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
     mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
+      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
     );
   }
 
@@ -100,6 +101,7 @@ ipcMain.handle("select-folder", async () => {
 
     return { success: true, tree: files, path: folderPath };
   } catch (err) {
+    console.error(err);
     return { success: false, error: err.message };
   }
 });
@@ -137,7 +139,7 @@ ipcMain.handle("save-file", async (event, payload) => {
     // 3️⃣ Save drawing.json
     const filePath = path.join(
       activeFolder,
-      `${path.basename(activeFolder)}.json`
+      `${path.basename(activeFolder)}.json`,
     );
 
     const fileContent = JSON.stringify(
@@ -146,7 +148,7 @@ ipcMain.handle("save-file", async (event, payload) => {
         appState: { ...appState, name: path.basename(activeFolder) },
       },
       null,
-      2
+      2,
     );
 
     await fs.writeFile(filePath, fileContent, "utf-8");
@@ -166,12 +168,12 @@ ipcMain.handle("open-file", async (event, { activeFolder, savePath }) => {
     // 3️⃣ Save drawing.json
     const filePath = path.join(
       activeFolder,
-      `${path.basename(activeFolder)}.json`
+      `${path.basename(activeFolder)}.json`,
     );
 
     const backupPath = path.join(
       activeFolder,
-      `${path.basename(activeFolder)}.backup.json`
+      `${path.basename(activeFolder)}.backup.json`,
     );
 
     await fs.copyFile(filePath, backupPath);
@@ -198,36 +200,6 @@ ipcMain.handle("open-file", async (event, { activeFolder, savePath }) => {
   }
 });
 
-export async function readDirRecursive(dir) {
-  const items = await fs.readdir(dir, { withFileTypes: true });
-
-  const result = [];
-
-  for (const item of items) {
-    const fullPath = path.join(dir, item.name);
-
-    if (item.name.startsWith(".") || item.name === "images") {
-      continue;
-    }
-
-    if (item.isDirectory()) {
-      const children = await readDirRecursive(fullPath);
-
-      const target = path.basename(fullPath) + ".json";
-      if (children.find((c) => c.name === target)) {
-        result.push({ name: item.name, path: fullPath });
-      } else {
-        result.push([item.name, ...children]);
-      }
-    } else {
-      if (item.name.endsWith(".json"))
-        result.push({ name: item.name, path: fullPath });
-    }
-  }
-
-  return result;
-}
-
 ipcMain.handle("db:create", (_, data) => createRecord(data));
 ipcMain.handle("db:get", (_, id) => getRecord(id));
 ipcMain.handle("db:all", () => getAllRecords());
@@ -239,10 +211,10 @@ ipcMain.handle("db:getByElement", (_, element) => getByElement(element));
 ipcMain.handle("db:getByFolder", (_, data) => getByFolder(data));
 ipcMain.handle("db:search-tag", (_, text) => searchTagContains(text));
 ipcMain.handle("db:search-tag-activeFolder", (_, data) =>
-  searchTagInActiveFolder(data)
+  searchTagInActiveFolder(data),
 );
 
 ipcMain.handle("path:join", (_, data) => path.join(...data));
 ipcMain.handle("path:relative", (_, savePath, activeFolder) =>
-  path.relative(savePath, activeFolder)
+  path.relative(savePath, activeFolder),
 );

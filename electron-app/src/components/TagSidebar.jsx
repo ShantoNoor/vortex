@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useState } from "react";
-import { useUiStore } from "../lib/store";
+import { uiStore } from "../lib/store";
 import { Input } from "./ui/input";
 import { FilePenLine, Link, X } from "lucide-react";
 import { CopyButton } from "./CopyButton";
@@ -14,7 +14,7 @@ const TagSidebar = () => {
     setScrollElement,
     savePath,
     toggleRightSidebar,
-  } = useUiStore();
+  } = uiStore();
   const [relativeActiveFolder, setRelativeActiveFolder] =
     useState(activeFolder);
 

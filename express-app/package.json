@@ -1,0 +1,20 @@
+{
+  "name": "express-app",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "dev": "cp -r ../electron-app/src/core-lib/ core-lib/ && node --watch server.js",
+    "start": "node server.js",
+    "cp": "cp -r ../electron-app/src/core-lib/ core-lib/"
+  },
+  "keywords": [],
+  "author": "Shanto Noor",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "better-sqlite3": "^12.5.0"
+  }
+}

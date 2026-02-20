@@ -1,4 +1,3 @@
-// db.js
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
@@ -73,7 +72,7 @@ export function getByFolder({ activeFolder, savePath }) {
   const relativeActiveFolder = path.relative(savePath, activeFolder);
 
   const stmt = db.prepare(
-    `SELECT * FROM items WHERE activeFolder = ? ORDER BY tag ASC`
+    `SELECT * FROM items WHERE activeFolder = ? ORDER BY tag ASC`,
   );
   return stmt.all(relativeActiveFolder);
 }
@@ -85,7 +84,7 @@ export async function searchTagContains(text) {
       group
         .trim()
         .split(/\s+/)
-        .map((w) => `%${w.toLowerCase()}%`)
+        .map((w) => `%${w.toLowerCase()}%`),
     )
     .filter((g) => g.length > 0);
 
@@ -121,7 +120,7 @@ export async function searchTagInActiveFolder({
       group
         .trim()
         .split(/\s+/)
-        .map((w) => `%${w.toLowerCase()}%`)
+        .map((w) => `%${w.toLowerCase()}%`),
     )
     .filter((g) => g.length > 0);
 

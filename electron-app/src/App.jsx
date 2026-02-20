@@ -4,7 +4,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Editor } from "./components/Editor";
-import { useUiStore } from "./lib/store";
+import { uiStore } from "./lib/store";
 import { AppSidebar } from "./components/AppSidebar";
 import { useEffect } from "react";
 import { Loader } from "./components/Loader";
@@ -21,7 +21,7 @@ export default function App() {
     setActiveFolder,
     showSidebarRight,
     setLoadingFolder,
-  } = useUiStore();
+  } = uiStore();
 
   useEffect(() => {
     async function run() {

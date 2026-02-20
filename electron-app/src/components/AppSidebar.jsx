@@ -24,11 +24,11 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 
-import { useUiStore } from "../lib/store";
+import { uiStore } from "../lib/store";
 
 export function AppSidebar() {
   const { selectFolder, tree, savePath, setActiveFolder, activeFolder } =
-    useUiStore();
+    uiStore();
   const actions = [
     {
       name: "New",
@@ -96,7 +96,7 @@ export function AppSidebar() {
 
 function Tree({ item }) {
   const [name, ...items] = Array.isArray(item) ? item : [item];
-  const { setActiveFolder, activeFolder, autoSave } = useUiStore();
+  const { setActiveFolder, activeFolder, autoSave } = uiStore();
 
   if (typeof name !== "string") {
     return (

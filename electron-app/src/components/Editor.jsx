@@ -14,7 +14,7 @@ import {
   LockKeyholeOpen,
   Sidebar as SidebarIcon,
 } from "lucide-react";
-import { useUiStore } from "../lib/store";
+import { uiStore } from "../lib/store";
 import { useEffect, useRef, useState } from "react";
 import { Loader } from "./Loader";
 import { Button } from "./ui/button";
@@ -51,7 +51,7 @@ const initialData = {
 };
 
 export const Editor = () => {
-  const timeoutId = useRef("");
+  const timeoutId = useRef(null);
   const imagesOpenRef = useRef(null);
   const [excalidrawAPI, setExcalidrawAPI] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -73,7 +73,7 @@ export const Editor = () => {
     scrollElement,
     setScrollElement,
     loadingFolder,
-  } = useUiStore();
+  } = uiStore();
 
   useEffect(() => {
     if (scrollElement && autoSave) {
@@ -465,7 +465,7 @@ export const Editor = () => {
           const ctx = segmentCanvas.getContext("2d");
           const segmentHeight = Math.min(
             chunkHeight,
-            totalHeight - i * chunkHeight
+            totalHeight - i * chunkHeight,
           );
 
           segmentCanvas.width = totalWidth;
@@ -679,7 +679,7 @@ export const Editor = () => {
         </Footer>
       </Excalidraw>
 
-      <Input
+      <input
         ref={imagesOpenRef}
         type="file"
         multiple

@@ -8,9 +8,12 @@
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "rm -rf out && electron-forge make",
-    "reinstall": "rm -rf out && electron-forge make && sudo rpm -e vortex-desktop-1.0.0-1.fc43.x86_64 && sudo rpm -i /home/shanto/Downloads/vortex-desktop/out/make/rpm/x64/vortex-desktop-1.0.0-1.x86_64.rpm",
+    "reinstall": "rm -rf out && electron-forge make && sudo rpm -e vortex-desktop-1.0.0-1.fc43.x86_64 && sudo rpm -i /home/shanto/Downloads/vortex/out/make/rpm/x64/vortex-desktop-1.0.0-1.x86_64.rpm",
     "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\""
+    "dev": "VITE_API_URL=http://localhost:3000 vite dev --config vite.renderer.config.mjs",
+    "build": "rm -rf dist && VITE_API_URL=http://localhost:3000 vite build --config vite.renderer.config.mjs",
+    "build-single-file": "rm -rf dist && VITE_API_URL=http://localhost:3000 vite build --config vite.renderer.single-file.config.mjs",
+    "rebuild": "electron-rebuild -f -w better-sqlite3"
   },
   "keywords": [],
   "author": {

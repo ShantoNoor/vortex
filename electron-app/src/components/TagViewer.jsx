@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useUiStore } from "../lib/store";
+import { uiStore } from "../lib/store";
 import { Input } from "./ui/input";
 import { CopyButton } from "./CopyButton";
 
@@ -9,7 +9,7 @@ const TagViewer = ({ activeFolder, savePath }) => {
 
   const [search, setSearch] = useState("");
 
-  const setScrollElement = useUiStore((state) => state.setScrollElement);
+  const setScrollElement = uiStore((state) => state.setScrollElement);
 
   useEffect(() => {
     (async function () {

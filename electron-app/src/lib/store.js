@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export const useUiStore = create(
+export const uiStore = create(
   persist(
     (set) => ({
       showSidebar: true,
@@ -49,6 +49,6 @@ export const useUiStore = create(
         showSidebar: state.showSidebar,
         activeFolder: state.activeFolder,
       }),
-    }
-  )
+    },
+  ),
 );
