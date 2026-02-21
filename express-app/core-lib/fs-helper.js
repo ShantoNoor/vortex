@@ -1,11 +1,7 @@
 import fs from "fs/promises";
 import path from "node:path";
 
-import {
-  cleanupDeletedFolders,
-  cleanupFolderElements,
-  initDB,
-} from "./db.js";
+import { cleanupDeletedFolders, cleanupFolderElements, initDB } from "./db.js";
 import { addFiles, getFiles } from "./imagefs.js";
 
 export async function readDirRecursive(dir) {
@@ -38,10 +34,11 @@ export async function readDirRecursive(dir) {
   return result;
 }
 
-export async function selectFolder(folderPath) {
+export async function selectFolder(folderPath, initdb = true) {
   try {
     const files = await readDirRecursive(folderPath);
-    initDB(path.join(folderPath, `${path.basename(folderPath)}.db`));
+    if (initdb)
+      initDB(path.join(folderPath, `${path.basename(folderPath)}.db`));
 
     return { success: true, tree: files, path: folderPath };
   } catch (err) {
@@ -50,11 +47,13 @@ export async function selectFolder(folderPath) {
   }
 }
 
-export async function getFilesfs(folderPath) {
+export async function getFilesfs(folderPath, initdb = true) {
   try {
     const files = await readDirRecursive(folderPath);
-    initDB(path.join(folderPath, `${path.basename(folderPath)}.db`));
-    cleanupDeletedFolders(folderPath);
+    if (initdb) {
+      initDB(path.join(folderPath, `${path.basename(folderPath)}.db`));
+      cleanupDeletedFolders(folderPath);
+    }
 
     return { success: true, tree: files };
   } catch (err) {
@@ -135,9 +134,9 @@ export async function openFile({ activeFolder, savePath }) {
 }
 
 export function joinPath(data) {
-  return path.join(...data)
+  return path.join(...data);
 }
 
 export function relativePath(savePath, activeFolder) {
-  return path.relative(savePath, activeFolder)
+  return path.relative(savePath, activeFolder);
 }

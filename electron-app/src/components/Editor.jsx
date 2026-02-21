@@ -128,6 +128,12 @@ export const Editor = () => {
   }, [excalidrawAPI, loadingFolder]);
 
   const handleSave = async (elements, appState, files) => {
+    excalidrawAPI.setToast({
+      message: `Saving, please wait ...`,
+      closable: false,
+      duration: Infinity,
+    });
+
     const fileList = Object.values(files);
     const newlyAddedFiles = fileList.filter((file) => !ids.has(file.id));
 
@@ -202,6 +208,12 @@ export const Editor = () => {
         }
       }
     }
+
+    excalidrawAPI.setToast({
+      message: `Save Successfull!..`,
+      closable: true,
+      duration: 3000,
+    });
   };
 
   const saveFile = async () => {
@@ -570,7 +582,7 @@ export const Editor = () => {
         excalidrawAPI={(api) => setExcalidrawAPI(api)}
         initialData={initialData}
         onChange={(elements, appState, files) => {
-          if (activeFolder && autoSave) {
+          if (activeFolder && autoSave && !import.meta.env.VITE_API_URL) {
             if (timeoutId.current) {
               clearTimeout(timeoutId.current);
             }
