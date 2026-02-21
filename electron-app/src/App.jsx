@@ -21,6 +21,7 @@ export default function App() {
     setActiveFolder,
     showSidebarRight,
     setLoadingFolder,
+    selectFolder,
   } = uiStore();
 
   useEffect(() => {

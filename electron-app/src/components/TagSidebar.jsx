@@ -106,6 +106,7 @@ const TagSidebar = () => {
               ) {
                 return;
               }
+
               setActiveFolder(tactiveFolder);
               setScrollElement(t.element);
             }

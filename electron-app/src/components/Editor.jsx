@@ -7,12 +7,17 @@ import {
 } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
 import {
+  ArrowDown,
+  ArrowLeft,
   ArrowLeftToLine,
+  ArrowRight,
   FileText,
   Images,
   LockKeyhole,
   LockKeyholeOpen,
+  PanelRight,
   Sidebar as SidebarIcon,
+  Tag,
 } from "lucide-react";
 import { uiStore } from "../lib/store";
 import { useEffect, useRef, useState } from "react";
@@ -128,11 +133,13 @@ export const Editor = () => {
   }, [excalidrawAPI, loadingFolder]);
 
   const handleSave = async (elements, appState, files) => {
-    excalidrawAPI.setToast({
-      message: `Saving, please wait ...`,
-      closable: false,
-      duration: Infinity,
-    });
+    if (import.meta.env.VITE_API_URL) {
+      excalidrawAPI.setToast({
+        message: `Saving, please wait ...`,
+        closable: false,
+        duration: Infinity,
+      });
+    }
 
     const fileList = Object.values(files);
     const newlyAddedFiles = fileList.filter((file) => !ids.has(file.id));
@@ -208,12 +215,14 @@ export const Editor = () => {
         }
       }
     }
-
-    excalidrawAPI.setToast({
-      message: `Save Successfull!..`,
-      closable: true,
-      duration: 3000,
-    });
+    if (import.meta.env.VITE_API_URL) {
+      excalidrawAPI.setToast({
+        message: `Save Successfull!..`,
+        closable: true,
+        duration: 3000,
+      });
+    }
+    // console.log("saved!...");
   };
 
   const saveFile = async () => {
@@ -608,15 +617,17 @@ export const Editor = () => {
             );
           }
 
-          return (
-            <div className="h-full w-full flex flex-col justify-center items-center text-4xl">
-              <p>Unable to Embed</p>
-              <p className="">
-                {element.link}
-                <CopyButton value={element.link} />
-              </p>
-            </div>
-          );
+          if (
+            element.link.startsWith("https://youtu.be/") &&
+            import.meta.env.VITE_API_URL
+          )
+            return (
+              <iframe
+                width="100%"
+                height="100%"
+                src={`https://www.youtube.com/embed/${element.link.split("/").at(-1)}`}
+              ></iframe>
+            );
         }}
       >
         <MainMenu>
@@ -681,13 +692,54 @@ export const Editor = () => {
           </Sidebar.Tabs>
         </Sidebar>
         <Footer>
-          <Button
-            className="ml-2 p-4 bg-[#28292c]! border! border-[#191919]!"
-            variant="outline"
-            onClick={toggleSidebar}
-          >
-            <SidebarIcon className="size-4" />
-          </Button>
+          <div className="ml-2 w-full flex justify-between">
+            <div>
+              <Button
+                className="p-4 bg-[#28292c]! border! border-[#191919]!"
+                variant="outline"
+                onClick={toggleSidebar}
+              >
+                <SidebarIcon className="size-4" />
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                className="p-4 bg-[#28292c]! border! border-[#191919]!"
+                variant="outline"
+                onClick={openTagWindow}
+              >
+                <Tag className="size-4" />
+              </Button>
+              <Button
+                className="p-4 bg-[#28292c]! border! border-[#191919]!"
+                variant="outline"
+                onClick={() => selectDirection("left")}
+              >
+                <ArrowLeft className="size-4" />
+              </Button>
+              <Button
+                className="p-4 bg-[#28292c]! border! border-[#191919]!"
+                variant="outline"
+                onClick={() => selectDirection("slide_down")}
+              >
+                <ArrowDown className="size-4" />
+              </Button>
+              <Button
+                className="p-4 bg-[#28292c]! border! border-[#191919]!"
+                variant="outline"
+                onClick={() => selectDirection("right")}
+              >
+                <ArrowRight className="size-4" />
+              </Button>
+              <Button
+                className="p-4 bg-[#28292c]! border! border-[#191919]!"
+                variant="outline"
+                onClick={toggleRightSidebar}
+              >
+                <PanelRight className="size-4" />
+              </Button>
+            </div>
+          </div>
         </Footer>
       </Excalidraw>
 
