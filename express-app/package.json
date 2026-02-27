@@ -5,8 +5,8 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "dev": "cp -r ../electron-app/src/core-lib/ core-lib/ && node --watch server.js",
-    "start": "node server.js",
+    "dev": "cp -r ../electron-app/src/core-lib/ core-lib/ && DEV=true node --watch server.js",
+    "start": "FOLDER_URI=/home/shanto/Downloads/test/ node server.js",
     "cp": "cp -r ../electron-app/src/core-lib/ ./"
   },
   "keywords": [],
@@ -15,6 +15,7 @@
   "dependencies": {
     "better-sqlite3": "^12.5.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "multer": "^2.0.2",
     "socket.io": "^4.8.3"

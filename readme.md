@@ -18,3 +18,13 @@ It is built around **Excalidraw**, giving me a fast, flexible, and intuitive can
 - **Excalidraw**
 - **Node.js / fs**
 - **ShadCN UI / Tailwind CSS**
+
+#### Linux Fedora Build Issue Solve:
+
+> https://github.com/electron/forge/issues/3701
+
+#### Find RPM Package Name:
+
+```bash
+rpm -qa | grep -i "vortex"
+```

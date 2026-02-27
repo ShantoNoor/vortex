@@ -37,8 +37,9 @@ const io = new Server(server, {
 });
 
 const PORT = 5000;
-// const folderPath = "/home/shanto/Documents/notes/";
-const folderPath = "/home/shanto/Downloads/test/";
+const folderPath = process.env.DEV
+  ? "/home/shanto/Downloads/test/"
+  : "/home/shanto/Documents/notes/";
 
 initDB(path.join(folderPath, `${path.basename(folderPath)}.db`));
 
@@ -132,5 +133,5 @@ app.post("/db-search-tag-activeFolder", async (req, res) => {
 });
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on 0.0.0.0:${PORT}`);
+  console.log(`Server running on 0.0.0.0:${PORT} at ${folderPath}`);
 });
