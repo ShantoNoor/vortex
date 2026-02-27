@@ -1,90 +1,83 @@
-export const api = {};
-
 const URI = import.meta.env.VITE_API_URL;
 
-api.getFiles = async (folderPath) => {
-  const res = await fetch(`${URI}/get-files`);
-  return await res.json();
-};
+export const api = {
+  getFiles: async (folderPath) => {
+    const res = await fetch(`${URI}/get-files`);
+    return await res.json();
+  },
+  selectFolder: async (folderPath) => {
+    const res = await fetch(`${URI}/select-folder`);
+    return await res.json();
+  },
+  openFile: async ({ activeFolder, savePath }) => {
+    try {
+      const response = await fetch(`${URI}/open-file`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          activeFolder: activeFolder,
+          savePath: savePath,
+        }),
+      });
 
-api.selectFolder = async (folderPath) => {
-  const res = await fetch(`${URI}/select-folder`);
-  return await res.json();
-};
+      return await response.json();
+    } catch (error) {
+      console.error("Error:", error);
+      return { success: false, error: error.message };
+    }
+  },
+  handleSave: async (payload) => {
+    try {
+      const response = await fetch(`${URI}/save-file`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-api.openFile = async ({ activeFolder, savePath }) => {
-  try {
-    const response = await fetch(`${URI}/open-file`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        activeFolder: activeFolder,
-        savePath: savePath,
-      }),
-    });
+      return await response.json();
+    } catch (error) {
+      console.error("Error:", error);
+      return { success: false, error: error.message };
+    }
+  },
+  joinPath: async (data) => {
+    try {
+      const response = await fetch(`${URI}/join-path`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error:", error);
-    return { success: false, error: error.message };
-  }
-};
+      const data1 = await response.json();
+      return data1;
+    } catch (error) {
+      console.error("Error:", error);
+      return { success: false, error: error.message };
+    }
+  },
+  relativePath: async (savePath, activeFolder) => {
+    try {
+      const response = await fetch(`${URI}/relative-path`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ savePath, activeFolder }),
+      });
 
-api.handleSave = async (payload) => {
-  try {
-    const response = await fetch(`${URI}/save-file`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error:", error);
-    return { success: false, error: error.message };
-  }
-};
-
-api.joinPath = async (data) => {
-  try {
-    const response = await fetch(`${URI}/join-path`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-
-    const data1 = await response.json();
-    return data1;
-  } catch (error) {
-    console.error("Error:", error);
-    return { success: false, error: error.message };
-  }
-};
-
-api.relativePath = async (savePath, activeFolder) => {
-  try {
-    const response = await fetch(`${URI}/relative-path`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ savePath, activeFolder }),
-    });
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error:", error);
-    return { success: false, error: error.message };
-  }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error:", error);
+      return { success: false, error: error.message };
+    }
+  },
 };
 
 export const db = {

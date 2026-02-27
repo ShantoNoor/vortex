@@ -4,7 +4,7 @@ import { Input } from "./ui/input";
 import { FilePenLine, Link, X } from "lucide-react";
 import { CopyButton } from "./CopyButton";
 
-const TagSidebar = () => {
+const TagSidebar = ({ saved }) => {
   const [tags, setTags] = useState([]);
   const [tagsFiltered, setTagsFiltered] = useState([]);
   const [search, setSearch] = useState("");
@@ -102,7 +102,14 @@ const TagSidebar = () => {
             } else {
               if (
                 !activeFolder &&
-                !confirm("Sure ? Unsaved progress will be lost ...")
+                !confirm("Sure then Ok else Cancel and Save! ...")
+              ) {
+                return;
+              }
+
+              if (
+                !saved.current &&
+                !confirm("Sure then Ok else Cancel and Save! ...")
               ) {
                 return;
               }

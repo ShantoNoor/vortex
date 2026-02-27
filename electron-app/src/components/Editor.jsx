@@ -12,6 +12,7 @@ import {
   ArrowLeftToLine,
   ArrowRight,
   FileText,
+  FolderSync,
   Images,
   LockKeyhole,
   LockKeyholeOpen,
@@ -44,6 +45,8 @@ import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { CopyButton } from "./CopyButton";
 import TagManager from "./TagManager";
 import TagViewer from "./TagViewer";
+import { checkHealth, socket } from "../lib/socket";
+import { toast } from "sonner";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 pdfjsLib.GlobalWorkerOptions.enableWebGL = true;
@@ -55,7 +58,7 @@ const initialData = {
   appState: { viewBackgroundColor: "#222" },
 };
 
-export const Editor = () => {
+export const Editor = ({ saved }) => {
   const timeoutId = useRef(null);
   const imagesOpenRef = useRef(null);
   const [excalidrawAPI, setExcalidrawAPI] = useState(null);
@@ -121,25 +124,21 @@ export const Editor = () => {
 
           excalidrawAPI.addFiles(data.files);
           setAutoSave(true);
+          socket.emit("join-room", activeFolder);
         } else {
           setActiveFolder(null);
         }
 
         excalidrawAPI.setToast(null);
         setLoader(false);
+        saved.current = false;
       }
     }
     run();
   }, [excalidrawAPI, loadingFolder]);
 
   const handleSave = async (elements, appState, files) => {
-    if (import.meta.env.VITE_API_URL) {
-      excalidrawAPI.setToast({
-        message: `Saving, please wait ...`,
-        closable: false,
-        duration: Infinity,
-      });
-    }
+    const tid = toast.loading("Saving, please wait ...");
 
     const fileList = Object.values(files);
     const newlyAddedFiles = fileList.filter((file) => !ids.has(file.id));
@@ -215,14 +214,15 @@ export const Editor = () => {
         }
       }
     }
-    if (import.meta.env.VITE_API_URL) {
-      excalidrawAPI.setToast({
-        message: `Save Successfull!..`,
-        closable: true,
-        duration: 3000,
-      });
-    }
-    // console.log("saved!...");
+
+    socket.emit("send-message", {
+      room: activeFolder,
+      message: "sync",
+    });
+
+    toast.dismiss(tid);
+    toast.success("Save Successfull!..");
+    saved.current = true;
   };
 
   const saveFile = async () => {
@@ -590,14 +590,19 @@ export const Editor = () => {
       <Excalidraw
         excalidrawAPI={(api) => setExcalidrawAPI(api)}
         initialData={initialData}
-        onChange={(elements, appState, files) => {
-          if (activeFolder && autoSave && !import.meta.env.VITE_API_URL) {
-            if (timeoutId.current) {
-              clearTimeout(timeoutId.current);
-            }
-            timeoutId.current = setTimeout(() => {
-              handleSave(elements, appState, files);
-            }, 500);
+        // onChange={(elements, appState, files) => {
+        //   if (activeFolder && autoSave && !import.meta.env.VITE_API_URL) {
+        //     if (timeoutId.current) {
+        //       clearTimeout(timeoutId.current);
+        //     }
+        //     timeoutId.current = setTimeout(() => {
+        //       handleSave(elements, appState, files);
+        //     }, 500);
+        //   }
+        // }}
+        onChange={() => {
+          if (saved.current) {
+            saved.current = false;
           }
         }}
         validateEmbeddable={(link) => true}
@@ -629,6 +634,17 @@ export const Editor = () => {
               ></iframe>
             );
         }}
+        renderTopRightUI={() => {
+          return (
+            <Button
+              className="p-4 bg-[#28292c]! border! border-[#191919]!"
+              variant="outline"
+              onClick={saveFile}
+            >
+              <ArrowLeftToLine size={4} />
+            </Button>
+          );
+        }}
       >
         <MainMenu>
           <MainMenu.Item
@@ -656,6 +672,29 @@ export const Editor = () => {
             }}
           >
             Import PDF
+          </MainMenu.Item>
+          <MainMenu.Item
+            icon={<FolderSync strokeWidth={1.5} />}
+            onSelect={async () => {
+              const check = await checkHealth();
+              console.log(check);
+              if (check.success) {
+                if (socket.connected) {
+                  socket.emit("join-room", activeFolder);
+                  toast.success("Already connected to server.");
+                } else {
+                  socket.connect();
+                  socket.once("connect", () => {
+                    socket.emit("join-room", activeFolder);
+                    toast.success("Socket Connected!...");
+                  });
+                }
+              } else {
+                toast.error("Failed to connect Socket!...");
+              }
+            }}
+          >
+            Connect Sync
           </MainMenu.Item>
           <MainMenu.Item
             icon={<LockKeyhole strokeWidth={1.5} />}

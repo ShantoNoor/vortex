@@ -6,9 +6,18 @@ import {
 import { Editor } from "./components/Editor";
 import { uiStore } from "./lib/store";
 import { AppSidebar } from "./components/AppSidebar";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Loader } from "./components/Loader";
 import TagSidebar from "./components/TagSidebar";
+
+import { api, db } from "./react-app-bridge";
+import { socket } from "./lib/socket";
+import { Toaster } from "./components/ui/sonner";
+
+if (import.meta.env.VITE_API_URL) {
+  window.api = api;
+  window.db = db;
+}
 
 export default function App() {
   const {
@@ -21,8 +30,9 @@ export default function App() {
     setActiveFolder,
     showSidebarRight,
     setLoadingFolder,
-    selectFolder,
   } = uiStore();
+
+  const saved = useRef(false);
 
   useEffect(() => {
     async function run() {
@@ -41,9 +51,17 @@ export default function App() {
     run();
   }, []);
 
+  useEffect(() => {
+    socket.on("receive-message", (data) => {
+      if (data.message === "sync") {
+        setActiveFolder(data.activeFolder);
+      }
+    });
+  }, [socket]);
+
   return (
     <>
-      <title>{activeFolder || "Undefined"}</title>
+      <title>{activeFolder || "Select Folder"}</title>
 
       <ResizablePanelGroup
         autoSaveId="persistence"
@@ -58,13 +76,13 @@ export default function App() {
               defaultSize={20}
               order={1}
             >
-              <AppSidebar />
+              <AppSidebar saved={saved} />
             </ResizablePanel>
             <ResizableHandle />
           </>
         )}
         <ResizablePanel id="main" order={2}>
-          <Editor />
+          <Editor saved={saved} />
         </ResizablePanel>
         {showSidebarRight && (
           <>
@@ -75,7 +93,7 @@ export default function App() {
               defaultSize={20}
               order={3}
             >
-              <TagSidebar />
+              <TagSidebar saved={saved} />
             </ResizablePanel>
           </>
         )}
@@ -85,6 +103,15 @@ export default function App() {
           <Loader />
         </div>
       )}
+      <Toaster
+        theme="dark"
+        position="top-right"
+        richColors={true}
+        closeButton={true}
+        toastOptions={{
+          duration: 1500,
+        }}
+      />
     </>
   );
 }

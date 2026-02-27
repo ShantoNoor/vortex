@@ -26,7 +26,7 @@ import {
 
 import { uiStore } from "../lib/store";
 
-export function AppSidebar() {
+export function AppSidebar({ saved }) {
   const { selectFolder, tree, savePath, setActiveFolder, activeFolder } =
     uiStore();
   const actions = [
@@ -36,7 +36,7 @@ export function AppSidebar() {
       onClick: () => {
         if (
           !activeFolder &&
-          !confirm("Sure ? Unsaved progress will be lost ...")
+          !confirm("Sure then Ok else Cancel and Save! ...")
         ) {
           return;
         }
@@ -49,7 +49,7 @@ export function AppSidebar() {
       onClick: () => {
         if (
           !activeFolder &&
-          !confirm("Sure ? Unsaved progress will be lost ...")
+          !confirm("Sure then Ok else Cancel and Save! ...")
         ) {
           return;
         }
@@ -82,7 +82,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu className="min-w-screen">
                 {tree?.map((item, index) => (
-                  <Tree key={index} item={item} />
+                  <Tree key={index} item={item} saved={saved} />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -94,7 +94,7 @@ export function AppSidebar() {
   );
 }
 
-function Tree({ item }) {
+function Tree({ item, saved }) {
   const [name, ...items] = Array.isArray(item) ? item : [item];
   const { setActiveFolder, activeFolder, autoSave } = uiStore();
 
@@ -108,7 +108,14 @@ function Tree({ item }) {
             if (name.path === activeFolder) return;
             if (
               !activeFolder &&
-              !confirm("Sure ? Unsaved progress will be lost ...")
+              !confirm("Sure then Ok else Cancel and Save! ...")
+            ) {
+              return;
+            }
+
+            if (
+              !saved.current &&
+              !confirm("Sure then Ok else Cancel and Save! ...")
             ) {
               return;
             }
@@ -144,7 +151,7 @@ function Tree({ item }) {
         <CollapsibleContent>
           <SidebarMenuSub>
             {items.map((subItem, index) => (
-              <Tree key={index} item={subItem} />
+              <Tree key={index} item={subItem} saved={saved} />
             ))}
           </SidebarMenuSub>
         </CollapsibleContent>
