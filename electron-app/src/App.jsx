@@ -11,7 +11,6 @@ import { Loader } from "./components/Loader";
 import TagSidebar from "./components/TagSidebar";
 
 import { api, db } from "./react-app-bridge";
-import { socket } from "./lib/socket";
 import { Toaster } from "./components/ui/sonner";
 
 if (import.meta.env.VITE_API_URL) {
@@ -50,14 +49,6 @@ export default function App() {
     }
     run();
   }, []);
-
-  useEffect(() => {
-    socket.on("receive-message", (data) => {
-      if (data.message === "sync") {
-        setActiveFolder(data.activeFolder);
-      }
-    });
-  }, [socket]);
 
   return (
     <>

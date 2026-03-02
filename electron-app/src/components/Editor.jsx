@@ -137,6 +137,30 @@ export const Editor = ({ saved }) => {
     run();
   }, [excalidrawAPI, loadingFolder]);
 
+  useEffect(() => {
+    if (!socket || !excalidrawAPI) return;
+
+    const handleSync = (data) => {
+      if (excalidrawAPI) {
+        excalidrawAPI.updateScene({
+          elements: data.payload.elements,
+          appState: data.payload.appState,
+          captureUpdate: CaptureUpdateAction.IMMEDIATELY,
+        });
+
+        if (data.payload.fileList) {
+          excalidrawAPI.addFiles(data.payload.fileList);
+        }
+      }
+    };
+
+    socket.on("sync", handleSync);
+
+    return () => {
+      socket.off("sync", handleSync);
+    };
+  }, [excalidrawAPI, socket]);
+
   const handleSave = async (elements, appState, files) => {
     const tid = toast.loading("Saving, please wait ...");
 
@@ -201,6 +225,7 @@ export const Editor = ({ saved }) => {
         viewModeEnabled,
       },
       savePath,
+      senderId: socket.id,
     });
 
     if (data.success) {
@@ -214,11 +239,6 @@ export const Editor = ({ saved }) => {
         }
       }
     }
-
-    socket.emit("send-message", {
-      room: activeFolder,
-      message: "sync",
-    });
 
     toast.dismiss(tid);
     toast.success("Save Successfull!..");
@@ -476,11 +496,6 @@ export const Editor = ({ saved }) => {
         if (numSegments === 0)
           numSegments = Math.ceil(totalHeight / chunkHeight);
 
-        // console.log({
-        //   numSegments,
-        //   chunkHeight,
-        // });
-
         for (let i = 0; i < numSegments; i++) {
           const segmentCanvas = document.createElement("canvas");
           const ctx = segmentCanvas.getContext("2d");
@@ -574,6 +589,8 @@ export const Editor = ({ saved }) => {
           toggleRightSidebar();
         } else if (e.key === "j") {
           openTagWindow();
+        } else if (e.key === "s") {
+          saveFile();
         }
       }
     };

@@ -34,6 +34,8 @@ const io = new Server(server, {
   cors: {
     origin: "*",
   },
+  pingTimeout: 10000,
+  pingInterval: 10000,
 });
 
 const PORT = 5000;
@@ -53,11 +55,10 @@ io.on("connection", (socket) => {
 
     socket.join(roomName);
     console.log(socket.id, "joined", roomName);
-    // console.log(socket.rooms);
   });
 
-  socket.on("send-message", ({ room, message }) => {
-    socket.to(room).emit("receive-message", { message, activeFolder: room });
+  socket.on("disconnect", () => {
+    console.log(socket.id + " left!...");
   });
 });
 
@@ -80,7 +81,10 @@ app.post("/open-file", async (req, res) => {
   res.json(await openFile({ activeFolder, savePath }));
 });
 app.post("/save-file", async (req, res) => {
-  const payload = req.body;
+  const { senderId, ...payload } = req.body;
+  io.to(payload.activeFolder).except(senderId).emit("sync", {
+    payload,
+  });
   res.json(await saveFile(payload));
 });
 app.post("/join-path", async (req, res) => {
