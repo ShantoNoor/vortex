@@ -13,7 +13,14 @@ import {
   searchTagInActiveFolder,
   updateRecord,
 } from "./core-lib/db.js";
-import { selectFolder, getFilesfs, saveFile, openFile, joinPath, relativePath } from "./core-lib/fs-helper.js";
+import {
+  selectFolder,
+  getFilesfs,
+  saveFile,
+  openFile,
+  joinPath,
+  relativePath,
+} from "./core-lib/fs-helper.js";
 
 if (started) {
   app.quit();
@@ -90,10 +97,13 @@ ipcMain.handle("select-folder", async () => {
 
   const folderPath = result.filePaths[0];
 
-  return await selectFolder(folderPath)
+  return await selectFolder(folderPath);
 });
 
-ipcMain.handle("get-files", async (event, folderPath) => await getFilesfs(folderPath));
+ipcMain.handle(
+  "get-files",
+  async (event, folderPath) => await getFilesfs(folderPath),
+);
 
 ipcMain.handle("save-file", async (event, payload) => {
   let { activeFolder, savePath } = payload;
@@ -117,7 +127,7 @@ ipcMain.handle("save-file", async (event, payload) => {
     }
   }
 
-  return await saveFile({...payload, activeFolder})
+  return await saveFile({ ...payload, activeFolder });
 });
 
 ipcMain.handle("open-file", async (event, payload) => await openFile(payload));
@@ -137,4 +147,6 @@ ipcMain.handle("db:search-tag-activeFolder", (_, data) =>
 );
 
 ipcMain.handle("path:join", (_, data) => joinPath(data));
-ipcMain.handle("path:relative", (_, savePath, activeFolder) => relativePath(savePath, activeFolder));
+ipcMain.handle("path:relative", (_, savePath, activeFolder) =>
+  relativePath(savePath, activeFolder),
+);

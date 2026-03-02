@@ -131,7 +131,7 @@ export const Editor = ({ saved }) => {
 
         excalidrawAPI.setToast(null);
         setLoader(false);
-        saved.current = false;
+        saved.current = true;
       }
     }
     run();

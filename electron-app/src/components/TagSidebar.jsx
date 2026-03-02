@@ -108,6 +108,7 @@ const TagSidebar = ({ saved }) => {
               }
 
               if (
+                activeFolder &&
                 !saved.current &&
                 !confirm("Sure then Ok else Cancel and Save! ...")
               ) {
