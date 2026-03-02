@@ -1,6 +1,8 @@
-# My Personal Knowledge Management System — Vortex Desktop
+# Vortex
 
-Vortex Desktop is my personal Knowledge Management System (KMS), designed to organize ideas, documents, and workflows visually.  
+![cover.png](cover.png)
+
+Vortex is my personal Knowledge Management System (KMS), designed to organize ideas, documents, and workflows visually.  
 It is built around **Excalidraw**, giving me a fast, flexible, and intuitive canvas for thought.
 
 ## ✨ Features
@@ -19,7 +21,7 @@ It is built around **Excalidraw**, giving me a fast, flexible, and intuitive can
 - **Node.js / fs**
 - **ShadCN UI / Tailwind CSS**
 
-#### Linux Fedora Build Issue Solve:
+#### Fedora Linux Build Issue Solve:
 
 > https://github.com/electron/forge/issues/3701
 
