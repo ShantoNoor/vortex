@@ -5,7 +5,7 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "dev": "cp -r ../electron-app/src/core-lib/ core-lib/ && DEV=true node --watch server.js",
+    "dev": "cp -r ../electron-app/src/core-lib/ ./ && DEV=true node --watch server.js",
     "start": "FOLDER_URI=/home/shanto/Downloads/test/ node server.js",
     "cp": "cp -r ../electron-app/src/core-lib/ ./"
   },

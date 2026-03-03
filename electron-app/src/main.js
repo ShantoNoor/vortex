@@ -102,10 +102,10 @@ ipcMain.handle("select-folder", async () => {
 
 ipcMain.handle(
   "get-files",
-  async (event, folderPath) => await getFilesfs(folderPath),
+  async (_, folderPath) => await getFilesfs(folderPath),
 );
 
-ipcMain.handle("save-file", async (event, payload) => {
+ipcMain.handle("save-file", async (_, payload) => {
   let { activeFolder, savePath } = payload;
 
   if (!activeFolder) {
@@ -130,7 +130,7 @@ ipcMain.handle("save-file", async (event, payload) => {
   return await saveFile({ ...payload, activeFolder });
 });
 
-ipcMain.handle("open-file", async (event, payload) => await openFile(payload));
+ipcMain.handle("open-file", async (_, payload) => await openFile(payload));
 
 ipcMain.handle("db:create", (_, data) => createRecord(data));
 ipcMain.handle("db:get", (_, id) => getRecord(id));

@@ -9,7 +9,7 @@ export const api = {
     const res = await fetch(`${URI}/select-folder`);
     return await res.json();
   },
-  openFile: async ({ activeFolder, savePath }) => {
+  openFile: async ({ activeFolder, savePath, isActive }) => {
     try {
       const response = await fetch(`${URI}/open-file`, {
         method: "POST",
@@ -17,8 +17,9 @@ export const api = {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          activeFolder: activeFolder,
-          savePath: savePath,
+          activeFolder,
+          savePath,
+          isActive,
         }),
       });
 
@@ -154,7 +155,6 @@ export const db = {
     }
   },
   getByTag: async (tag) => {
-    console.log(tag);
     try {
       const response = await fetch(`${URI}/db-getByTag`, {
         method: "POST",

@@ -57,6 +57,10 @@ io.on("connection", (socket) => {
     console.log(socket.id, "joined", roomName);
   });
 
+  socket.on("sync", ({ activeFolder, payload }) => {
+    socket.to(activeFolder).emit("merge", { payload });
+  });
+
   socket.on("disconnect", () => {
     console.log(socket.id + " left!...");
   });
@@ -69,6 +73,16 @@ app.get("/", async (req, res) => {
 app.get("/health", (req, res) => {
   res.status(200).json({ success: true });
 });
+app.post("/is-room-active", (req, res) => {
+  const { activeFolder } = req.body;
+  const room = io.sockets.adapter.rooms.get(activeFolder);
+
+  if (room) {
+    return res.json({ active: true });
+  }
+
+  res.json({ active: false });
+});
 
 app.get("/select-folder", async (req, res) => {
   res.json(await selectFolder(folderPath, false));
@@ -77,14 +91,11 @@ app.get("/get-files", async (req, res) => {
   res.json(await getFilesfs(folderPath, false));
 });
 app.post("/open-file", async (req, res) => {
-  const { activeFolder, savePath } = req.body;
-  res.json(await openFile({ activeFolder, savePath }));
+  const { activeFolder, savePath, isActive } = req.body;
+  res.json(await openFile({ activeFolder, savePath, isActive }));
 });
 app.post("/save-file", async (req, res) => {
-  const { senderId, ...payload } = req.body;
-  io.to(payload.activeFolder).except(senderId).emit("sync", {
-    payload,
-  });
+  const payload = req.body;
   res.json(await saveFile(payload));
 });
 app.post("/join-path", async (req, res) => {

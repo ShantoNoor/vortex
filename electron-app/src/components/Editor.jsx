@@ -111,7 +111,33 @@ export const Editor = ({ saved }) => {
         });
         setLoader(true);
 
-        const data = await window.api.openFile({ activeFolder, savePath });
+        let isActive = false;
+
+        try {
+          const roomRes = await fetch(
+            import.meta.env.VITE_API_URL
+              ? `${import.meta.env.VITE_API_URL}/is-room-active`
+              : "http://localhost:5000/is-room-active",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                activeFolder: activeFolder,
+              }),
+            },
+          );
+
+          const { active } = await roomRes.json();
+          isActive = active;
+        } catch (e) {}
+
+        const data = await window.api.openFile({
+          activeFolder,
+          savePath,
+          isActive, // used to programatically delete unwanted files...
+        });
 
         if (data.success) {
           ids = new Set(data.idList);
@@ -140,24 +166,24 @@ export const Editor = ({ saved }) => {
   useEffect(() => {
     if (!socket || !excalidrawAPI) return;
 
-    const handleSync = (data) => {
+    const handleMerge = ({ payload }) => {
       if (excalidrawAPI) {
         excalidrawAPI.updateScene({
-          elements: data.payload.elements,
-          appState: data.payload.appState,
+          elements: payload.elements,
+          appState: payload.appState,
           captureUpdate: CaptureUpdateAction.IMMEDIATELY,
         });
 
-        if (data.payload.fileList) {
-          excalidrawAPI.addFiles(data.payload.fileList);
-        }
+        excalidrawAPI.addFiles(payload.fileList);
+
+        toast.info("Update merged!...");
       }
     };
 
-    socket.on("sync", handleSync);
+    socket.on("merge", handleMerge);
 
     return () => {
-      socket.off("sync", handleSync);
+      socket.off("merge", handleMerge);
     };
   }, [excalidrawAPI, socket]);
 
@@ -167,65 +193,39 @@ export const Editor = ({ saved }) => {
     const fileList = Object.values(files);
     const newlyAddedFiles = fileList.filter((file) => !ids.has(file.id));
 
-    const {
-      theme,
-      currentChartType,
-      currentItemBackgroundColor,
-      currentItemEndArrowhead,
-      currentItemFillStyle,
-      currentItemFontFamily,
-      currentItemFontSize,
-      currentItemOpacity,
-      currentItemRoughness,
-      currentItemStrokeColor,
-      currentItemRoundness,
-      currentItemArrowType,
-      currentItemStrokeStyle,
-      currentItemStrokeWidth,
-      currentItemTextAlign,
-      gridSize,
-      gridStep,
-      gridModeEnabled,
-      scrollX,
-      scrollY,
-      viewBackgroundColor,
-      zenModeEnabled,
-      zoom,
-      viewModeEnabled,
-    } = appState;
+    const appStateToSave = {
+      theme: appState.theme,
+      currentChartType: appState.currentChartType,
+      currentItemBackgroundColor: appState.currentItemBackgroundColor,
+      currentItemEndArrowhead: appState.currentItemEndArrowhead,
+      currentItemFillStyle: appState.currentItemFillStyle,
+      currentItemFontFamily: appState.currentItemFontFamily,
+      currentItemFontSize: appState.currentItemFontSize,
+      currentItemOpacity: appState.currentItemOpacity,
+      currentItemRoughness: appState.currentItemRoughness,
+      currentItemStrokeColor: appState.currentItemStrokeColor,
+      currentItemRoundness: appState.currentItemRoundness,
+      currentItemArrowType: appState.currentItemArrowType,
+      currentItemStrokeStyle: appState.currentItemStrokeStyle,
+      currentItemStrokeWidth: appState.currentItemStrokeWidth,
+      currentItemTextAlign: appState.currentItemTextAlign,
+      gridSize: appState.gridSize,
+      gridStep: appState.gridStep,
+      gridModeEnabled: appState.gridModeEnabled,
+      scrollX: appState.scrollX,
+      scrollY: appState.scrollY,
+      viewBackgroundColor: appState.viewBackgroundColor,
+      zenModeEnabled: appState.zenModeEnabled,
+      zoom: appState.zoom,
+      viewModeEnabled: appState.viewModeEnabled,
+    };
 
     const data = await window.api.handleSave({
       activeFolder,
       elements,
       fileList: newlyAddedFiles,
-      appState: {
-        theme,
-        currentChartType,
-        currentItemBackgroundColor,
-        currentItemEndArrowhead,
-        currentItemFillStyle,
-        currentItemFontFamily,
-        currentItemFontSize,
-        currentItemOpacity,
-        currentItemRoughness,
-        currentItemStrokeColor,
-        currentItemRoundness,
-        currentItemArrowType,
-        currentItemStrokeStyle,
-        currentItemStrokeWidth,
-        currentItemTextAlign,
-        gridSize,
-        gridStep,
-        gridModeEnabled,
-        scrollX,
-        scrollY,
-        viewBackgroundColor,
-        zenModeEnabled,
-        zoom,
-        viewModeEnabled,
-      },
+      appState: appStateToSave,
       savePath,
-      senderId: socket.id,
     });
 
     if (data.success) {
@@ -239,6 +239,15 @@ export const Editor = ({ saved }) => {
         }
       }
     }
+
+    socket.emit("sync", {
+      activeFolder,
+      payload: {
+        elements,
+        fileList: newlyAddedFiles,
+        appState: appStateToSave,
+      },
+    });
 
     toast.dismiss(tid);
     toast.success("Save Successfull!..");
@@ -694,7 +703,6 @@ export const Editor = ({ saved }) => {
             icon={<FolderSync strokeWidth={1.5} />}
             onSelect={async () => {
               const check = await checkHealth();
-              console.log(check);
               if (check.success) {
                 if (socket.connected) {
                   socket.emit("join-room", activeFolder);

@@ -96,20 +96,18 @@ export async function saveFile(payload) {
   }
 }
 
-export async function openFile({ activeFolder, savePath }) {
+export async function openFile({ activeFolder, savePath, isActive }) {
   try {
-    // 3️⃣ Save drawing.json
     const filePath = path.join(
       activeFolder,
       `${path.basename(activeFolder)}.json`,
     );
 
-    const backupPath = path.join(
-      activeFolder,
-      `${path.basename(activeFolder)}.backup.json`,
-    );
-
-    await fs.copyFile(filePath, backupPath);
+    // const backupPath = path.join(
+    //   activeFolder,
+    //   `${path.basename(activeFolder)}.backup.json`,
+    // );
+    // await fs.copyFile(filePath, backupPath);
 
     const fileContent = await fs.readFile(filePath, "utf-8");
     const data = JSON.parse(fileContent);
@@ -123,12 +121,11 @@ export async function openFile({ activeFolder, savePath }) {
       .filter((e) => e.type === "image")
       .map((e) => e.fileId);
 
-    const files = await getFiles(idList, activeFolder);
+    const files = await getFiles(idList, activeFolder, isActive);
 
     return { success: true, elements, appState, files, idList };
   } catch (error) {
     console.error("Failed to open file:", error);
-    // Return the error to the renderer so the UI can show a notification
     return { success: false, error: error.message };
   }
 }

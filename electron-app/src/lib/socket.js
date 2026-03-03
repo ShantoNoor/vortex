@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 
 export const socket = io(
-  import.meta.env.VITE_API_URL ? null : "http://localhost:5000",
+  import.meta.env.ELECTRON_MAKE ? null : "http://localhost:5000",
   {
     autoConnect: true,
     reconnection: true,
