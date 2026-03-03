@@ -4,6 +4,7 @@ import {
   CaptureUpdateAction,
   Footer,
   Sidebar,
+  mutateElement,
 } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
 import {
@@ -53,6 +54,30 @@ pdfjsLib.GlobalWorkerOptions.enableWebGL = true;
 const chunkWidth = 2000;
 
 let ids = new Set([]);
+
+const getBoundingBox = (el) => ({
+  left: el.x,
+  right: el.x + el.width,
+  top: el.y,
+  bottom: el.y + el.height,
+});
+
+const isOverlapping = (a, b) => {
+  return !(
+    a.right <= b.left ||
+    a.left >= b.right ||
+    a.bottom <= b.top ||
+    a.top >= b.bottom
+  );
+};
+
+const boxDistance = (a, b) => {
+  const dx = Math.max(b.left - a.right, a.left - b.right, 0);
+
+  const dy = Math.max(b.top - a.bottom, a.top - b.bottom, 0);
+
+  return dx * dx + dy * dy;
+};
 
 const initialData = {
   appState: { viewBackgroundColor: "#222" },
@@ -290,17 +315,6 @@ export const Editor = ({ saved }) => {
     });
   };
 
-  const zoom = (v) => {
-    excalidrawAPI.updateScene({
-      appState: {
-        zoom: {
-          value: v,
-        },
-        scrollToContent: true,
-      },
-    });
-  };
-
   const selectDirection = (d) => {
     const { selectedElementIds } = excalidrawAPI.getAppState();
 
@@ -341,6 +355,57 @@ export const Editor = ({ saved }) => {
         },
         captureUpdate: CaptureUpdateAction.IMMEDIATELY,
       });
+    }
+  };
+
+  const autoSet = (d) => {
+    const { selectedElementIds } = excalidrawAPI.getAppState();
+    const selectedElementIdsArray = Object.keys(selectedElementIds);
+    if (selectedElementIdsArray.length === 1) {
+      const selectedId = selectedElementIdsArray[0];
+      const elements = excalidrawAPI.getSceneElements();
+      const selectedElement = elements.find((e) => e.id === selectedId);
+
+      let nearestElement = null;
+      let minDistance = Infinity;
+
+      const selectedBox = getBoundingBox(selectedElement);
+      elements.forEach((el) => {
+        if (el.id === selectedElement.id || el.isDeleted) return;
+
+        const otherBox = getBoundingBox(el);
+
+        if (isOverlapping(selectedBox, otherBox)) return;
+
+        const dist = boxDistance(selectedBox, otherBox);
+
+        if (dist < minDistance) {
+          minDistance = dist;
+          nearestElement = el;
+        }
+      });
+
+      if (nearestElement) {
+        if (d === "down") {
+          mutateElement(selectedElement, {
+            x: nearestElement.x,
+            y: nearestElement.y + nearestElement.height + 5,
+            width: nearestElement.width,
+            height:
+              (nearestElement.width / selectedElement.width) *
+              selectedElement.height,
+          });
+        } else if (d === "right") {
+          mutateElement(selectedElement, {
+            x: nearestElement.x + nearestElement.width + 100,
+            y: nearestElement.y,
+            width: nearestElement.width,
+            height:
+              (nearestElement.width / selectedElement.width) *
+              selectedElement.height,
+          });
+        }
+      }
     }
   };
 
@@ -574,11 +639,7 @@ export const Editor = ({ saved }) => {
         e.target.isContentEditable;
 
       if (!isTyping) {
-        if (e.key === "n") {
-          zoom(15);
-        } else if (e.key === "m") {
-          zoom(1);
-        } else if (e.key === ",") {
+        if (e.key === ",") {
           selectDirection("left");
         } else if (e.key === ".") {
           selectDirection("right");
@@ -600,6 +661,10 @@ export const Editor = ({ saved }) => {
           openTagWindow();
         } else if (e.key === "s") {
           saveFile();
+        } else if (e.key === "n") {
+          autoSet("down");
+        } else if (e.key === "m") {
+          autoSet("right");
         }
       }
     };
