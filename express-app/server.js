@@ -36,6 +36,7 @@ const io = new Server(server, {
   },
   pingTimeout: 10000,
   pingInterval: 10000,
+  maxHttpBufferSize: 5e8, // 500 MB
 });
 
 const PORT = 5000;
