@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  </head>
+  <body>
+    <div id="root">Hi ... Shanto</div>
+    <button onclick="window.api.toast('hi noor')">Click Me.</button>
+    <button onclick="window.api.saveHelloToFile()">Hello File</button>
+    <button onclick="window.api.selectFolder()">Select Folder</button>
+    <button onclick="getF()">Get Files</button>
+
+    <script>
+      function getF() {
+        const res = window.api.getFiles('/storage/emulated/0/Download/notes')
+        console.log(res)
+      }
+      window.onFolderSelected = (result) => {
+        if (result.canceled) return null;
+        console.log(result)
+        return result;
+      };
+    </script>
+  </body>
+</html>

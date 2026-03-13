@@ -23,6 +23,7 @@ import {
   searchTagInActiveFolder,
   updateRecord,
 } from "./core-lib/db.js";
+import os from "os";
 import path from "node:path";
 
 const app = express();
@@ -40,9 +41,10 @@ const io = new Server(server, {
 });
 
 const PORT = 5000;
+const home = os.homedir();
 const folderPath = process.env.DEV
-  ? "/home/shanto/Downloads/test/"
-  : "/home/shanto/Documents/notes/";
+  ? path.join(home, "Downloads/test/")
+  : path.join(home, "Documents/notes/");
 
 initDB(path.join(folderPath, `${path.basename(folderPath)}.db`));
 
