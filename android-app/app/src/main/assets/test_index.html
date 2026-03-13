@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  </head>
+  <body>
+    <div id="root">Hi ... Shanto</div>
+    <button onclick="window.android.toast('hi noor')">Click Me.</button>
+    <button onclick="window.android.saveHelloToFile()">Hello File</button>
+    <button onclick="selectFolder()">Select Folder</button>
+    <button onclick="getFiles()">Get Files</button>
+
+    <script>
+      window.pendingPromises = {};
+      window.promiseCounter = 0;
+
+      window.resolvePromise = function(id, result) {
+        console.log(result)
+        const handler = window.pendingPromises[id];
+        handler.resolve(result);
+        delete window.pendingPromises[id];
+      };
+      window.api = window.api || {}
+      window.api.getFiles = (folderPath) => {
+        return new Promise((resolve, reject) => {
+          const id = window.promiseCounter++;
+          window.pendingPromises[id] = { resolve, reject };
+          window.android.getFiles(folderPath, id);
+        });
+      };
+      window.api.selectFolder = () => {
+        return new Promise((resolve, reject) => {
+          const id = window.promiseCounter++;
+          window.pendingPromises[id] = { resolve, reject };
+          window.android.selectFolder(id);
+        });
+      }
+      window.api.handleSave = (payload) => {
+        return new Promise((resolve, reject) => {
+          const id = window.promiseCounter++;
+          window.pendingPromises[id] = { resolve, reject };
+          window.android.handleSave(id, payload);
+        });
+      }
+
+      async function getFiles() {
+        const res = await window.api.getFiles('/storage/emulated/0/Download/notes')
+        console.log(res)
+      }
+      async function selectFolder() {
+        const res = await window.api.selectFolder()
+        console.log(res)
+      }
+      async function handleSave() {
+        const res = await window.api.handleSave({
+          savePath, activeFolder, elements, appState, fileList
+        })
+        console.log(res)
+      }
+    </script>
+  </body>
+</html>

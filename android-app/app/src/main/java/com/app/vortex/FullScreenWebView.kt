@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -25,23 +26,28 @@ fun FullScreenWebView(modifier: Modifier = Modifier) {
 
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
 
-    val folderPickerLauncher = rememberLauncherForActivityResult(
+    var currentFolderId by remember { mutableStateOf<Int?>(null) }
+    val selectFolderLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
+        val id = currentFolderId ?: return@rememberLauncherForActivityResult
+        // Clear immediately to prevent stale ID if another picker is launched
+        currentFolderId = null
+
         if (uri == null) {
             // User canceled
-            webViewRef?.evaluateJavascript("window.onFolderSelected({ success: false, canceled: true })", null)
+            webViewRef?.evaluateJavascript("window.resolvePromise($id, { success: false, error: 'Canceled' })", null)
             return@rememberLauncherForActivityResult
         }
-
+//
         // Convert SAF Uri to absolute File path (Requires MANAGE_EXTERNAL_STORAGE)
         val folderPath = getPathFromUri(uri)
 
         if (folderPath != null) {
             val resultObj = getFilesfs(folderPath)
-            webViewRef?.evaluateJavascript("window.onFolderSelected($resultObj)", null)
+            webViewRef?.evaluateJavascript("window.resolvePromise($id, $resultObj)", null)
         } else {
-            webViewRef?.evaluateJavascript("window.onFolderSelected({ success: false, error: 'Could not resolve path' })", null)
+            webViewRef?.evaluateJavascript("window.resolvePromise($id, { success: false, error: 'Could not resolve path' })", null)
         }
     }
 
@@ -55,17 +61,19 @@ fun FullScreenWebView(modifier: Modifier = Modifier) {
                 settings.javaScriptEnabled = true
 
                 val jsInterface = WebAppInterface(
+                    webViewRef = this,
                     context = ctx,
-                    onTriggerPicker = {
+                    onSelectFolder = { id ->
+                        currentFolderId = id
                         Handler(Looper.getMainLooper()).post {
-                            folderPickerLauncher.launch(null)
+                            selectFolderLauncher.launch(null)
                         }
                     }
                 )
 
-                addJavascriptInterface(jsInterface, "api")
+                addJavascriptInterface(jsInterface, "android")
 
-                loadUrl("file:///android_asset/index.html")
+                loadUrl("file:///android_asset/test_index.html")
             }
         }
     )
