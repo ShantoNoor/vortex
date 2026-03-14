@@ -1,12 +1,21 @@
 package com.app.vortex
 
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.ViewGroup
+import android.webkit.ConsoleMessage
+import android.webkit.JsPromptResult
+import android.webkit.JsResult
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.EditText
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +27,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -39,7 +54,7 @@ fun FullScreenWebView(modifier: Modifier = Modifier) {
             webViewRef?.evaluateJavascript("window.resolvePromise($id, { success: false, error: 'Canceled' })", null)
             return@rememberLauncherForActivityResult
         }
-//
+
         // Convert SAF Uri to absolute File path (Requires MANAGE_EXTERNAL_STORAGE)
         val folderPath = getPathFromUri(uri)
 
@@ -57,8 +72,66 @@ fun FullScreenWebView(modifier: Modifier = Modifier) {
             WebView(ctx).apply {
                 webViewRef = this
 
-                webViewClient = WebViewClient()
+                webViewClient = object : WebViewClient() {
+                    override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
+                        Log.e("WebView", "Error: ${error.description} for ${request.url}")
+                    }
+                }
+
+                webChromeClient = object : WebChromeClient() {
+                    override fun onConsoleMessage(message: ConsoleMessage): Boolean {
+                        Log.d("WebView", "${message.message()} -- line ${message.lineNumber()} from ${message.sourceId()}")
+                        return true
+                    }
+
+                    override fun onJsAlert(view: WebView, url: String, message: String, result: JsResult): Boolean {
+                        AlertDialog.Builder(context)
+                            .setTitle("Alert")
+                            .setMessage(message)
+                            .setPositiveButton(android.R.string.ok) { _, _ -> result.confirm() }
+                            .setOnCancelListener { result.cancel() }
+                            .show()
+                        return true
+                    }
+
+                    override fun onJsConfirm(view: WebView, url: String, message: String, result: JsResult): Boolean {
+                        AlertDialog.Builder(context)
+                            .setTitle("Confirm")
+                            .setMessage(message)
+                            .setPositiveButton(android.R.string.ok) { _, _ -> result.confirm() }
+                            .setNegativeButton(android.R.string.cancel) { _, _ -> result.cancel() }
+                            .setOnCancelListener { result.cancel() }
+                            .show()
+                        return true
+                    }
+
+                    override fun onJsPrompt(
+                        view: WebView,
+                        url: String,
+                        message: String,
+                        defaultValue: String,
+                        result: JsPromptResult
+                    ): Boolean {
+                        val input = EditText(context).apply { setText(defaultValue) }
+                        AlertDialog.Builder(context)
+                            .setTitle("Prompt")
+                            .setMessage(message)
+                            .setView(input)
+                            .setPositiveButton(android.R.string.ok) { _, _ -> result.confirm(input.text.toString()) }
+                            .setNegativeButton(android.R.string.cancel) { _, _ -> result.cancel() }
+                            .setOnCancelListener { result.cancel() }
+                            .show()
+                        return true
+                    }
+                }
+
                 settings.javaScriptEnabled = true
+                settings.domStorageEnabled = true
+
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
 
                 val jsInterface = WebAppInterface(
                     webViewRef = this,
@@ -73,7 +146,7 @@ fun FullScreenWebView(modifier: Modifier = Modifier) {
 
                 addJavascriptInterface(jsInterface, "android")
 
-                loadUrl("file:///android_asset/test_index.html")
+                loadUrl("file:///android_asset/index.html")
             }
         }
     )

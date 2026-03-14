@@ -142,7 +142,7 @@ export const Editor = ({ saved }) => {
           const roomRes = await fetch(
             import.meta.env.VITE_API_URL
               ? `${import.meta.env.VITE_API_URL}/is-room-active`
-              : "http://localhost:5000/is-room-active",
+              : "http://localhost:3000/is-room-active",
             {
               method: "POST",
               headers: {

@@ -8,12 +8,17 @@
   </head>
   <body>
     <div id="root">Hi ... Shanto</div>
+    <button onclick="changeRoot()">Change Root</button>
+
     <button onclick="window.android.toast('hi noor')">Click Me.</button>
-    <button onclick="window.android.saveHelloToFile()">Hello File</button>
     <button onclick="selectFolder()">Select Folder</button>
     <button onclick="getFiles()">Get Files</button>
 
     <script>
+      function changeRoot() {
+        document.getElementById("root").innerText = "Hello ..."
+        alert("hello shanto")
+      }
       window.pendingPromises = {};
       window.promiseCounter = 0;
 

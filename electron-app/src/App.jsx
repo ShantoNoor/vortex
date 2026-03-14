@@ -9,14 +9,7 @@ import { AppSidebar } from "./components/AppSidebar";
 import { useEffect, useRef } from "react";
 import { Loader } from "./components/Loader";
 import TagSidebar from "./components/TagSidebar";
-
-import { api, db } from "./react-app-bridge";
 import { Toaster } from "./components/ui/sonner";
-
-if (import.meta.env.VITE_API_URL) {
-  window.api = api;
-  window.db = db;
-}
 
 export default function App() {
   const {

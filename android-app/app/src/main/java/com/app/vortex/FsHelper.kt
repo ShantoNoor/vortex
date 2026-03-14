@@ -21,6 +21,122 @@ fun getFilesfs(folderPath: String): JSONObject {
     return response
 }
 
+fun saveFileFs(activeFolder: String, elements: JSONArray, appState: JSONObject, fileList: JSONArray): JSONObject {
+    val response = JSONObject()
+    try {
+        val activeFolderFile = File(activeFolder)
+        val folderName = activeFolderFile.name
+        val filePath = File(activeFolderFile, "$folderName.json")
+
+        appState.put("name", folderName)
+
+        val fileContent = JSONObject().apply {
+            put("elements", elements)
+            put("appState", appState)
+        }
+
+        filePath.writeText(fileContent.toString(2))
+        addFiles(fileList, activeFolder)
+
+        response.put("success", true)
+        response.put("activeFolder", activeFolder)
+    } catch (e: Exception) {
+        response.put("success", false)
+        response.put("error", e.message)
+    }
+    return response
+}
+
+fun openFileFs(activeFolder: String, savePath: String, isActive: Boolean): JSONObject {
+    val response = JSONObject()
+    try {
+        val activeFolderFile = File(activeFolder)
+        val folderName = activeFolderFile.name
+        val filePath = File(activeFolderFile, "$folderName.json")
+
+        val fileContent = filePath.readText()
+        val data = JSONObject(fileContent)
+
+        val allElements = data.optJSONArray("elements") ?: JSONArray()
+        val appState = data.optJSONObject("appState") ?: JSONObject()
+
+        val elements = JSONArray()
+        val allElementIds = mutableListOf<String>()
+        val idList = mutableListOf<String>()
+
+        for (i in 0 until allElements.length()) {
+            val el = allElements.getJSONObject(i)
+            if (!el.optBoolean("isDeleted", false)) {
+                elements.put(el)
+                allElementIds.add(el.optString("id"))
+
+                if (el.optString("type") == "image") {
+                    idList.add(el.optString("fileId"))
+                }
+            }
+        }
+
+        DbManager.cleanupFolderElements(savePath, activeFolder, allElementIds)
+        val files = getImagesFs(idList, activeFolder, isActive)
+
+        response.put("success", true)
+        response.put("elements", elements)
+        response.put("appState", appState)
+        response.put("files", files)
+        response.put("idList", JSONArray(idList))
+
+    } catch (e: Exception) {
+        response.put("success", false)
+        response.put("error", e.message)
+    }
+    return response
+}
+
+private fun addFiles(fileList: JSONArray, activeFolder: String) {
+    val imagesDir = File(activeFolder, "images")
+    if (!imagesDir.exists()) imagesDir.mkdirs()
+
+    for (i in 0 until fileList.length()) {
+        try {
+            val fileObj = fileList.getJSONObject(i)
+            val fileId = fileObj.getString("id")
+            val imageFile = File(imagesDir, "$fileId.json")
+            imageFile.writeText(fileObj.toString(2))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+}
+
+private fun getImagesFs(idList: List<String>, activeFolder: String, isActive: Boolean): JSONArray {
+    val imagesDir = File(activeFolder, "images")
+    val results = JSONArray()
+
+    val allowedFiles = idList.map { "$it.json" }
+
+    for (fileId in idList) {
+        try {
+            val file = File(imagesDir, "$fileId.json")
+            if (file.exists()) {
+                results.put(JSONObject(file.readText()))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    if (!isActive) {
+        if (imagesDir.exists() && imagesDir.isDirectory) {
+            imagesDir.listFiles()?.forEach { file ->
+                if (!allowedFiles.contains(file.name)) {
+                    file.delete()
+                }
+            }
+        }
+    }
+    return results
+}
+
 fun readDirRecursive(dirPath: String): JSONArray {
     val dir = File(dirPath)
     val result = JSONArray()
