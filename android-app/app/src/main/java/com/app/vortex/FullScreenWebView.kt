@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.webkit.ConsoleMessage
 import android.webkit.JsPromptResult
 import android.webkit.JsResult
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -27,12 +28,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.json.JSONArray
-import org.json.JSONObject
 import java.io.File
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -41,6 +36,19 @@ fun FullScreenWebView(modifier: Modifier = Modifier) {
     val context = LocalContext.current
 
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
+
+    // File upload handling
+    var fileUploadCallback by remember { mutableStateOf<ValueCallback<Array<Uri>>?>(null) }
+    // For single file selection (e.g., <input type="file"> without "multiple")
+    val singleImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        fileUploadCallback?.onReceiveValue(if (uri != null) arrayOf(uri) else null)
+        fileUploadCallback = null
+    }
+    // For multiple file selection (e.g., <input type="file" multiple>)
+    val multipleImagesLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+        fileUploadCallback?.onReceiveValue(if (uris.isNotEmpty()) uris.toTypedArray() else null)
+        fileUploadCallback = null
+    }
 
     var currentFolderId by remember { mutableStateOf<Int?>(null) }
     val folderPickerLauncher = rememberLauncherForActivityResult(
@@ -90,6 +98,29 @@ fun FullScreenWebView(modifier: Modifier = Modifier) {
                 webChromeClient = object : WebChromeClient() {
                     override fun onConsoleMessage(message: ConsoleMessage): Boolean {
                         Log.d("WebView", "${message.message()} -- line ${message.lineNumber()} from ${message.sourceId()}")
+                        return true
+                    }
+
+                    override fun onShowFileChooser(
+                        webView: WebView?,
+                        filePathCallback: ValueCallback<Array<Uri>>?,
+                        fileChooserParams: FileChooserParams?
+                    ): Boolean {
+                        fileUploadCallback = filePathCallback
+
+                        // Get the accept types from the input element (e.g., "image/*", ".svg", etc.)
+                        val acceptTypes = fileChooserParams?.acceptTypes ?: arrayOf("*/*")
+
+                        // Convert any file extensions or invalid strings to a proper MIME type
+                        val validMimeType = acceptTypes.firstOrNull { it.contains('/') } ?: "*/*"
+
+                        val mode = fileChooserParams?.mode ?: FileChooserParams.MODE_OPEN
+
+                        if (mode == FileChooserParams.MODE_OPEN_MULTIPLE) {
+                            multipleImagesLauncher.launch(validMimeType)
+                        } else {
+                            singleImageLauncher.launch(validMimeType)
+                        }
                         return true
                     }
 

@@ -88,7 +88,7 @@ export default function App() {
         </div>
       )}
       <Toaster
-        theme="dark"
+        theme="light"
         position="top-right"
         richColors={true}
         closeButton={true}

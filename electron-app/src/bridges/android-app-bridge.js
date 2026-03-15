@@ -1,7 +1,7 @@
 window.pendingPromises = {};
 window.promiseCounter = 0;
 
-window.resolvePromise = function (id, result) {
+window.resolvePromise = (id, result) => {
   const handler = window.pendingPromises[id];
   handler.resolve(result);
   delete window.pendingPromises[id];
