@@ -33,6 +33,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -42,7 +43,7 @@ fun FullScreenWebView(modifier: Modifier = Modifier) {
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
 
     var currentFolderId by remember { mutableStateOf<Int?>(null) }
-    val selectFolderLauncher = rememberLauncherForActivityResult(
+    val folderPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
         val id = currentFolderId ?: return@rememberLauncherForActivityResult
@@ -59,8 +60,16 @@ fun FullScreenWebView(modifier: Modifier = Modifier) {
         val folderPath = getPathFromUri(uri)
 
         if (folderPath != null) {
-            val resultObj = getFilesfs(folderPath)
-            webViewRef?.evaluateJavascript("window.resolvePromise($id, $resultObj)", null)
+            val folder = File(folderPath)
+            val contents = folder.listFiles()
+
+            if (contents == null) {
+                // Unable to list contents (permission issue?)
+                webViewRef?.evaluateJavascript("window.resolvePromise($id, { success: false, error: 'Cannot read folder contents' })", null)
+                return@rememberLauncherForActivityResult
+            }
+
+            webViewRef?.evaluateJavascript("window.resolvePromise($id, { success: true, path: '$folderPath', isEmpty: ${contents.isEmpty()} })", null)
         } else {
             webViewRef?.evaluateJavascript("window.resolvePromise($id, { success: false, error: 'Could not resolve path' })", null)
         }
@@ -136,10 +145,10 @@ fun FullScreenWebView(modifier: Modifier = Modifier) {
                 val jsInterface = WebAppInterface(
                     webViewRef = this,
                     context = ctx,
-                    onSelectFolder = { id ->
+                    onFolderPicker = { id ->
                         currentFolderId = id
                         Handler(Looper.getMainLooper()).post {
-                            selectFolderLauncher.launch(null)
+                            folderPickerLauncher.launch(null)
                         }
                     }
                 )

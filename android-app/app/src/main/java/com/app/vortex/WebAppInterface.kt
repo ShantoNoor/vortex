@@ -15,7 +15,7 @@ import java.io.File
 
 class WebAppInterface(private val webViewRef: WebView,
                       private val context: Context,
-                      private val onSelectFolder: (id: Int) -> Unit
+                      private val onFolderPicker: (id: Int) -> Unit
 ) {
     private val scope = CoroutineScope(Dispatchers.Main)
 
@@ -35,8 +35,8 @@ class WebAppInterface(private val webViewRef: WebView,
     // --- FS Handlers ---
 
     @JavascriptInterface
-    fun selectFolder(id: Int) {
-        onSelectFolder(id)
+    fun folderPicker(id: Int) {
+        onFolderPicker(id)
     }
 
     @JavascriptInterface

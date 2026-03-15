@@ -263,20 +263,24 @@ export const Editor = ({ saved }) => {
           setTree(data2.tree);
         }
       }
+
+      socket.emit("sync", {
+        activeFolder,
+        payload: {
+          elements,
+          fileList: newlyAddedFiles,
+          appState: appStateToSave,
+        },
+      });
+
+      toast.dismiss(tid);
+      toast.success("Save Successfull!..");
+      saved.current = true;
+      return
     }
 
-    socket.emit("sync", {
-      activeFolder,
-      payload: {
-        elements,
-        fileList: newlyAddedFiles,
-        appState: appStateToSave,
-      },
-    });
-
     toast.dismiss(tid);
-    toast.success("Save Successfull!..");
-    saved.current = true;
+    toast.error(data?.error || "Failed to save!...");
   };
 
   const saveFile = async () => {

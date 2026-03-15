@@ -2,7 +2,6 @@ window.pendingPromises = {};
 window.promiseCounter = 0;
 
 window.resolvePromise = function (id, result) {
-  console.log(result);
   const handler = window.pendingPromises[id];
   handler.resolve(result);
   delete window.pendingPromises[id];
@@ -17,15 +16,30 @@ window.api.getFiles = (folderPath) => {
   });
 };
 
-window.api.selectFolder = () => {
+window.api.folderPicker = () => {
   return new Promise((resolve, reject) => {
     const id = window.promiseCounter++;
     window.pendingPromises[id] = { resolve, reject };
-    window.android.selectFolder(id);
+    window.android.folderPicker(id);
   });
 };
+window.api.selectFolder = async () => {
+  const res = await window.api.folderPicker();
+  if (res.success) return await window.api.getFiles(res.path);
+  return res;
+};
 
-window.api.handleSave = (payload) => {
+window.api.handleSave = async (payload) => {
+  if (!payload?.activeFolder) {
+    const res = await window.api.folderPicker();
+    if (res.success) {
+      if (!res.isEmpty)
+        return { success: false, error: "Folder is not Empty" };
+
+      payload.activeFolder = res.path;
+    } else return res;
+  }
+
   return new Promise((resolve, reject) => {
     const id = window.promiseCounter++;
     window.pendingPromises[id] = { resolve, reject };
