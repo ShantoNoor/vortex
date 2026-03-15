@@ -1,6 +1,6 @@
 const URI = import.meta.env.VITE_API_URL;
 
-export const api = {
+window.api = {
   getFiles: async (folderPath) => {
     const res = await fetch(`${URI}/get-files`);
     return await res.json();
@@ -81,7 +81,7 @@ export const api = {
   },
 };
 
-export const db = {
+window.db = {
   create: async (data) => {
     try {
       const response = await fetch(`${URI}/db-create`, {
@@ -161,7 +161,7 @@ export const db = {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(tag),
+        body: JSON.stringify({ tag }),
       });
 
       const data = await response.json();

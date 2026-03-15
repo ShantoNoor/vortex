@@ -130,7 +130,7 @@ app.post("/db-delete", async (req, res) => {
 	res.json(await deleteRecord(id));
 });
 app.post("/db-getByTag", async (req, res) => {
-	const tag = req.body;
+	const {tag} = req.body;
 	res.json(await getByTag(tag));
 });
 app.post("/db-getByElement", async (req, res) => {

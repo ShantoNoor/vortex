@@ -10,6 +10,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
 
@@ -112,11 +114,13 @@ class WebAppInterface(private val webViewRef: WebView,
     fun dbUpdate(id: Int, payloadStr: String, callbackId: Int) {
         scope.launch(Dispatchers.IO) {
             val p = JSONObject(payloadStr)
-            val success = DbManager.updateRecord(
+            val changes = DbManager.updateRecord(
                 id, p.getString("element"), p.getString("tag"),
                 p.getString("activeFolder"), p.getString("savePath")
             )
-            resolvePromise(callbackId, success)
+            val response = JSONObject()
+            response.put("changes", changes)
+            resolvePromise(callbackId, response)
         }
     }
 
@@ -171,19 +175,29 @@ class WebAppInterface(private val webViewRef: WebView,
     // --- Path Handlers ---
 
     @JavascriptInterface
-    fun pathJoin(pathsJsonArrStr: String, callbackId: Int) {
+    fun joinPath(pathsJsonArrStr: String, callbackId: Int) {
         scope.launch(Dispatchers.Default) {
-            val arr = org.json.JSONArray(pathsJsonArrStr)
-            val parts = mutableListOf<String>()
-            for (i in 0 until arr.length()) parts.add(arr.getString(i))
+            try {
+                val arr = JSONArray(pathsJsonArrStr)
+                val parts = List(arr.length()) { arr.getString(it) }
 
-            val joined = parts.joinToString(File.separator) { it.trim(File.separatorChar) }
-            resolvePromise(callbackId, joined)
+                val joined = if (parts.isEmpty()) {
+                    ""
+                } else {
+                    // Join with separator and collapse multiple separators into one
+                    parts.joinToString(File.separator)
+                        .replace(Regex("${File.separator}+"), File.separator)
+                }
+
+                resolvePromise(callbackId, joined)
+            } catch (e: JSONException) {
+                resolvePromise(callbackId, "Invalid JSON array: ${e.message}")
+            }
         }
     }
 
     @JavascriptInterface
-    fun pathRelative(savePath: String, activeFolder: String, callbackId: Int) {
+    fun relativePath(savePath: String, activeFolder: String, callbackId: Int) {
         scope.launch(Dispatchers.Default) {
             val rel = DbManager.getRelativePath(savePath, activeFolder)
             resolvePromise(callbackId, rel)

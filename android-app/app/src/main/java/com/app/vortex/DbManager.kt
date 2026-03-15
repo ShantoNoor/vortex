@@ -58,14 +58,14 @@ object DbManager {
         return result
     }
 
-    fun updateRecord(id: Int, element: String, tag: String, activeFolder: String, savePath: String): Boolean {
+    fun updateRecord(id: Int, element: String, tag: String, activeFolder: String, savePath: String): Int {
         val relative = getRelativePath(savePath, activeFolder)
         val statement = db?.compileStatement("UPDATE items SET element = ?, tag = ?, activeFolder = ? WHERE id = ?")
         statement?.bindString(1, element)
         statement?.bindString(2, tag)
         statement?.bindString(3, relative)
         statement?.bindLong(4, id.toLong())
-        return (statement?.executeUpdateDelete() ?: 0) > 0
+        return (statement?.executeUpdateDelete() ?: 0)
     }
 
     fun deleteRecord(id: Int): Boolean {
