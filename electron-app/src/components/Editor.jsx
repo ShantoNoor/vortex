@@ -12,6 +12,8 @@ import {
   ArrowLeft,
   ArrowLeftToLine,
   ArrowRight,
+  ChevronsDown,
+  ChevronsRight,
   FileText,
   FolderSync,
   Images,
@@ -836,13 +838,29 @@ export const Editor = ({ saved }) => {
         </Sidebar>
         <Footer>
           <div className="ml-2 w-full flex justify-between">
-            <div>
+            <div className="flex gap-2">
               <Button
                 className="p-4 bg-[#28292c]! border! border-[#191919]!"
                 variant="outline"
                 onClick={toggleSidebar}
               >
                 <SidebarIcon className="size-4" />
+              </Button>
+
+              <Button
+                className="p-4 bg-[#28292c]! border! border-[#191919]!"
+                variant="outline"
+                onClick={() => autoSet("right")}
+              >
+                <ChevronsRight className="size-4" />
+              </Button>
+
+              <Button
+                className="p-4 bg-[#28292c]! border! border-[#191919]!"
+                variant="outline"
+                onClick={() => autoSet("down")}
+              >
+                <ChevronsDown className="size-4" />
               </Button>
             </div>
             <div className="flex gap-2">
