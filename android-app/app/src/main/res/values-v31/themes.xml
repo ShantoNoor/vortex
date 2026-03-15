@@ -2,6 +2,10 @@
 <resources>
     <style name="Theme.Vortex" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/ic_launcher_background</item>
+        <item name="android:background">@color/ic_launcher_background</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+
     </style>
     <style name="Theme.SplashScreen" parent="Theme.Vortex">
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>

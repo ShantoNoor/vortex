@@ -21,9 +21,19 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("../vortex.jks")
+            storePassword = "vortex"
+            keyAlias = "vortex"
+            keyPassword = "vortex"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -37,6 +47,8 @@ android {
     buildFeatures {
         compose = true
     }
+
+
 }
 
 dependencies {
