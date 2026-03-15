@@ -81,6 +81,37 @@ class WebAppInterface(private val webViewRef: WebView,
         }
     }
 
+    @JavascriptInterface
+    fun getImage(payloadStr: String, callbackId: Int) {
+        scope.launch(Dispatchers.IO) {
+            val payload = JSONObject(payloadStr)
+
+            val activeFolder = payload.optString("activeFolder", "")
+
+            val fileList = payload.optString("fileId", "")
+            val idList = mutableListOf<String>()
+            idList.add(fileList)
+
+            val isActive = payload.optBoolean("isActive", false)
+
+            val result = getImagesFs(idList, activeFolder, isActive)
+            resolvePromise(callbackId, result)
+        }
+    }
+
+    @JavascriptInterface
+    fun saveImage(payloadStr: String, callbackId: Int) {
+        scope.launch(Dispatchers.IO) {
+            val payload = JSONObject(payloadStr)
+
+            val activeFolder = payload.optString("activeFolder", "")
+            val fileList = payload.optJSONArray("fileList") ?: org.json.JSONArray()
+
+            val result = addFiles(fileList, activeFolder)
+            resolvePromise(callbackId, result)
+        }
+    }
+
     // --- Database Handlers ---
 
     @JavascriptInterface

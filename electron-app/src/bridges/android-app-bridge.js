@@ -27,6 +27,22 @@ if (import.meta.env.VITE_ANDROID_BUILD) {
     });
   };
 
+  window.api.getImage = (payload) => {
+    return new Promise((resolve, reject) => {
+      const id = window.promiseCounter++;
+      window.pendingPromises[id] = { resolve, reject };
+      window.android.getImage(JSON.stringify(payload), id);
+    });
+  };
+
+  window.api.saveImage = (payload) => {
+    return new Promise((resolve, reject) => {
+      const id = window.promiseCounter++;
+      window.pendingPromises[id] = { resolve, reject };
+      window.android.saveImage(JSON.stringify(payload), id);
+    });
+  };
+
   window.api.selectFolder = async () => {
     const res = await window.api.folderPicker();
     if (res.success) return await window.api.getFiles(res.path);

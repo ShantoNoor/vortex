@@ -179,7 +179,34 @@ export const Editor = ({ saved }) => {
             captureUpdate: CaptureUpdateAction.IMMEDIATELY,
           });
 
-          excalidrawAPI.addFiles(data.files);
+          if (!import.meta.env.VITE_ANDROID_BUILD) {
+            excalidrawAPI.addFiles(data.files);
+          } else {
+            excalidrawAPI.setToast({
+              message: "Adding images ...",
+              closable: false,
+              duration: Infinity,
+            });
+
+            for (let i = 0; i < data.idList.length; ++i) {
+              const fileId = data.idList[i];
+              const file = await window.api.getImage({
+                activeFolder,
+                savePath,
+                isActive,
+                fileId,
+              });
+
+              excalidrawAPI.addFiles(file);
+
+              excalidrawAPI.setToast({
+                message: `Adding ${i + 1}/${data.idList.length} images.`,
+                closable: true,
+                duration: 1000,
+              });
+            }
+          }
+
           setAutoSave(true);
           if (!import.meta.env.VITE_ANDROID_BUILD)
             socket.emit("join-room", activeFolder);
@@ -255,13 +282,38 @@ export const Editor = ({ saved }) => {
     const data = await window.api.handleSave({
       activeFolder,
       elements,
-      fileList: newlyAddedFiles,
+      fileList: import.meta.env.VITE_ANDROID_BUILD ? [] : newlyAddedFiles,
       appState: appStateToSave,
       savePath,
     });
 
     if (data.success) {
-      newlyAddedFiles.forEach((file) => ids.add(file.id));
+      if (import.meta.env.VITE_ANDROID_BUILD) {
+        // newlyAddedFiles.forEach((file) => ids.add(file.id));
+
+        excalidrawAPI.setToast({
+          message: `Saving images, please wait ...`,
+          closable: false,
+          duration: Infinity,
+        });
+
+        let j = 1;
+        for (let i = 0; i < newlyAddedFiles.length; ++i) {
+          const file = newlyAddedFiles[i];
+          const res = await window.api.saveImage({
+            activeFolder: data.activeFolder,
+            fileList: [file],
+          });
+
+          excalidrawAPI.setToast({
+            message: `Saved ${j++}/${newlyAddedFiles.length} images.`,
+            closable: true,
+            duration: 1000,
+          });
+
+          ids.add(file.id);
+        }
+      }
 
       if (activeFolder === null) {
         setActiveFolder(data.activeFolder);

@@ -36,7 +36,7 @@ fun saveFileFs(activeFolder: String, elements: JSONArray, appState: JSONObject, 
         }
 
         filePath.writeText(fileContent.toString(2))
-        addFiles(fileList, activeFolder)
+//        addFiles(fileList, activeFolder)
 
         response.put("success", true)
         response.put("activeFolder", activeFolder)
@@ -77,12 +77,12 @@ fun openFileFs(activeFolder: String, savePath: String, isActive: Boolean): JSONO
         }
 
         DbManager.cleanupFolderElements(savePath, activeFolder, allElementIds)
-        val files = getImagesFs(idList, activeFolder, isActive)
+        deleteUnwantedImages(idList, activeFolder, isActive)
 
         response.put("success", true)
         response.put("elements", elements)
         response.put("appState", appState)
-        response.put("files", files)
+        response.put("files", JSONArray())
         response.put("idList", JSONArray(idList))
 
     } catch (e: Exception) {
@@ -92,7 +92,9 @@ fun openFileFs(activeFolder: String, savePath: String, isActive: Boolean): JSONO
     return response
 }
 
-private fun addFiles(fileList: JSONArray, activeFolder: String) {
+fun addFiles(fileList: JSONArray, activeFolder: String): JSONObject {
+    val response = JSONObject()
+
     val imagesDir = File(activeFolder, "images")
     if (!imagesDir.exists()) imagesDir.mkdirs()
 
@@ -104,15 +106,33 @@ private fun addFiles(fileList: JSONArray, activeFolder: String) {
             imageFile.writeText(fileObj.toString(2))
         } catch (e: Exception) {
             e.printStackTrace()
+            response.put("success", false)
+            response.put("error", e.message)
+            return response
+        }
+    }
+
+    response.put("success", true)
+    return response
+}
+
+fun deleteUnwantedImages(idList: List<String>, activeFolder: String, isActive: Boolean) {
+    val imagesDir = File(activeFolder, "images")
+    val allowedFiles = idList.map { "$it.json" }
+
+    if (!isActive) {
+        if (imagesDir.exists() && imagesDir.isDirectory) {
+            imagesDir.listFiles()?.forEach { file ->
+                if (!allowedFiles.contains(file.name)) {
+                    file.delete()
+                }
+            }
         }
     }
 }
-
-private fun getImagesFs(idList: List<String>, activeFolder: String, isActive: Boolean): JSONArray {
+fun getImagesFs(idList: List<String>, activeFolder: String, isActive: Boolean): JSONArray {
     val imagesDir = File(activeFolder, "images")
     val results = JSONArray()
-
-    val allowedFiles = idList.map { "$it.json" }
 
     for (fileId in idList) {
         try {
@@ -125,15 +145,6 @@ private fun getImagesFs(idList: List<String>, activeFolder: String, isActive: Bo
         }
     }
 
-    if (!isActive) {
-        if (imagesDir.exists() && imagesDir.isDirectory) {
-            imagesDir.listFiles()?.forEach { file ->
-                if (!allowedFiles.contains(file.name)) {
-                    file.delete()
-                }
-            }
-        }
-    }
     return results
 }
 

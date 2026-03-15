@@ -102,7 +102,7 @@ fun FullScreenWebView(modifier: Modifier = Modifier, onReady: () -> Unit) {
 
                         Handler(Looper.getMainLooper()).postDelayed({
                             onReady()
-                        }, 100)
+                        }, 300)
                     }
                 }
 
@@ -178,6 +178,8 @@ fun FullScreenWebView(modifier: Modifier = Modifier, onReady: () -> Unit) {
 
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
+                settings.allowFileAccess = true
+                settings.allowContentAccess = true
 
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
