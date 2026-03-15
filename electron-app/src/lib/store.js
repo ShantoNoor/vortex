@@ -37,6 +37,8 @@ export const uiStore = create(
             tree: data.tree,
             activeFolder: null,
           });
+          
+          window.location.reload();
         }
       },
       setLoading: (loading) => set(() => ({ loading })),
