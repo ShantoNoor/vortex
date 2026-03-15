@@ -36,8 +36,8 @@ window.api.handleSave = async (payload) => {
   if (!payload?.activeFolder) {
     const res = await window.api.folderPicker();
     if (res.success) {
-      if (!res.isEmpty) return { success: false, error: "Folder is not Empty" };
-
+      if (!res.isEmpty) return { success: false, error: "Unable to Save.. Folder is not Empty" };
+      if (!res.path.startsWith(payload.savePath)) return { success: false, error: "Unable to Save.. Select a Empty Folder inside: " + payload.savePath };
       payload.activeFolder = res.path;
     } else return res;
   }

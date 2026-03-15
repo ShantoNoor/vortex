@@ -88,12 +88,12 @@ export default function App() {
         </div>
       )}
       <Toaster
-        theme="light"
+        theme="dark"
         position="top-right"
         richColors={true}
         closeButton={true}
         toastOptions={{
-          duration: 1500,
+          duration: 2500,
         }}
       />
     </>

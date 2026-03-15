@@ -139,23 +139,27 @@ export const Editor = ({ saved }) => {
         let isActive = false;
 
         try {
-          const roomRes = await fetch(
-            import.meta.env.VITE_API_URL
-              ? `${import.meta.env.VITE_API_URL}/is-room-active`
-              : "http://localhost:3000/is-room-active",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
+          if (!import.meta.env.VITE_ANDROID_BUILD) {
+            const roomRes = await fetch(
+              import.meta.env.VITE_API_URL
+                ? `${import.meta.env.VITE_API_URL}/is-room-active`
+                : "http://localhost:5000/is-room-active",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  activeFolder: activeFolder,
+                }),
               },
-              body: JSON.stringify({
-                activeFolder: activeFolder,
-              }),
-            },
-          );
+            );
 
-          const { active } = await roomRes.json();
-          isActive = active;
+            const { active } = await roomRes.json();
+            isActive = active;
+          } else {
+            isActive = false;
+          }
         } catch (e) {}
 
         const data = await window.api.openFile({
@@ -175,7 +179,8 @@ export const Editor = ({ saved }) => {
 
           excalidrawAPI.addFiles(data.files);
           setAutoSave(true);
-          socket.emit("join-room", activeFolder);
+          if (!import.meta.env.VITE_ANDROID_BUILD)
+            socket.emit("join-room", activeFolder);
         } else {
           setActiveFolder(null);
         }
@@ -264,19 +269,20 @@ export const Editor = ({ saved }) => {
         }
       }
 
-      socket.emit("sync", {
-        activeFolder,
-        payload: {
-          elements,
-          fileList: newlyAddedFiles,
-          appState: appStateToSave,
-        },
-      });
+      if (!import.meta.env.VITE_ANDROID_BUILD)
+        socket.emit("sync", {
+          activeFolder,
+          payload: {
+            elements,
+            fileList: newlyAddedFiles,
+            appState: appStateToSave,
+          },
+        });
 
       toast.dismiss(tid);
       toast.success("Save Successfull!..");
       saved.current = true;
-      return
+      return;
     }
 
     toast.dismiss(tid);
@@ -768,28 +774,32 @@ export const Editor = ({ saved }) => {
           >
             Import PDF
           </MainMenu.Item>
-          <MainMenu.Item
-            icon={<FolderSync strokeWidth={1.5} />}
-            onSelect={async () => {
-              const check = await checkHealth();
-              if (check.success) {
-                if (socket.connected) {
-                  socket.emit("join-room", activeFolder);
-                  toast.success("Already connected to server.");
-                } else {
-                  socket.connect();
-                  socket.once("connect", () => {
+          {!import.meta.env.VITE_ANDROID_BUILD ? (
+            <MainMenu.Item
+              icon={<FolderSync strokeWidth={1.5} />}
+              onSelect={async () => {
+                const check = await checkHealth();
+                if (check.success) {
+                  if (socket.connected) {
                     socket.emit("join-room", activeFolder);
-                    toast.success("Socket Connected!...");
-                  });
+                    toast.success("Already connected to server.");
+                  } else {
+                    socket.connect();
+                    socket.once("connect", () => {
+                      socket.emit("join-room", activeFolder);
+                      toast.success("Socket Connected!...");
+                    });
+                  }
+                } else {
+                  toast.error("Failed to connect Socket!...");
                 }
-              } else {
-                toast.error("Failed to connect Socket!...");
-              }
-            }}
-          >
-            Connect Sync
-          </MainMenu.Item>
+              }}
+            >
+              Connect Sync
+            </MainMenu.Item>
+          ) : (
+            <></>
+          )}
           <MainMenu.Item
             icon={<LockKeyhole strokeWidth={1.5} />}
             onClick={lockAllElements}

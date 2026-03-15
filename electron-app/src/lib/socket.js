@@ -1,9 +1,9 @@
 import { io } from "socket.io-client";
 
 export const socket = io(
-  import.meta.env.VITE_WEB_BUILD ? null : "http://localhost:3000",
+  import.meta.env.VITE_WEB_BUILD ? null : "http://localhost:5000",
   {
-    autoConnect: true,
+    autoConnect: import.meta.env.VITE_ANDROID_BUILD ? false : true,
     reconnection: true,
     reconnectionAttempts: 3,
   },
@@ -14,7 +14,7 @@ export const checkHealth = async () => {
     const res = await fetch(
       import.meta.env.VITE_API_URL
         ? `${import.meta.env.VITE_API_URL}/health`
-        : "http://localhost:3000/health",
+        : "http://localhost:5000/health",
     );
 
     if (res.status === 200) {
