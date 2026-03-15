@@ -10,7 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 
 @Composable
-fun Vortex(modifier: Modifier = Modifier) {
+fun Vortex(modifier: Modifier = Modifier, onReady: () -> Unit) {
     var hasPermission by remember {
         mutableStateOf(checkStoragePermission())
     }
@@ -22,8 +22,9 @@ fun Vortex(modifier: Modifier = Modifier) {
     }
 
     if (hasPermission) {
-        FullScreenWebView(modifier = modifier)
+        FullScreenWebView(modifier = modifier, onReady=onReady)
     } else {
+        onReady()
         RequestFileSystemPermission(modifier = modifier, settingsLauncher = settingsLauncher)
     }
 }

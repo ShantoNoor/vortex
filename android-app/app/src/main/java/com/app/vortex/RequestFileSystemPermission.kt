@@ -6,6 +6,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.result.ActivityResult
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,19 +17,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.toColorInt
 
 @Composable
 fun RequestFileSystemPermission(modifier: Modifier = Modifier, settingsLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>) {
     val context = LocalContext.current
 
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().background(Color("#222222".toColorInt())),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "This app requires All Files Access.")
+        Text(text = "Vortex Requires All Files Access")
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

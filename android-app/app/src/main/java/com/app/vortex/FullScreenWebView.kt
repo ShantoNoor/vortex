@@ -19,6 +19,7 @@ import android.webkit.WebViewClient
 import android.widget.EditText
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,13 +27,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.graphics.toColorInt
 import java.io.File
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun FullScreenWebView(modifier: Modifier = Modifier) {
+fun FullScreenWebView(modifier: Modifier = Modifier, onReady: () -> Unit) {
     val context = LocalContext.current
 
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
@@ -84,7 +87,7 @@ fun FullScreenWebView(modifier: Modifier = Modifier) {
     }
 
     AndroidView(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().background(Color("#222222".toColorInt())),
         factory = { ctx ->
             WebView(ctx).apply {
                 webViewRef = this
@@ -92,6 +95,14 @@ fun FullScreenWebView(modifier: Modifier = Modifier) {
                 webViewClient = object : WebViewClient() {
                     override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
                         Log.e("WebView", "Error: ${error.description} for ${request.url}")
+                    }
+
+                    override fun onPageFinished(view: WebView?, url: String?) {
+                        super.onPageFinished(view, url)
+
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            onReady()
+                        }, 100)
                     }
                 }
 
