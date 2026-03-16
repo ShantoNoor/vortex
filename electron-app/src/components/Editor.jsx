@@ -84,7 +84,12 @@ const boxDistance = (a, b) => {
 };
 
 const initialData = {
-  appState: { viewBackgroundColor: "#222" },
+  appState: {
+    viewBackgroundColor: "#222",
+    activeTool: {
+      type: import.meta.env.VITE_ANDROID_BUILD ? "hand" : "selection",
+    },
+  },
 };
 
 export const Editor = ({ saved }) => {
@@ -175,12 +180,7 @@ export const Editor = ({ saved }) => {
 
           excalidrawAPI.updateScene({
             elements: data.elements,
-            appState: {
-              ...data.appState,
-              activeTool: {
-                type: "hand",
-              },
-            },
+            appState: data.appState,
             captureUpdate: CaptureUpdateAction.IMMEDIATELY,
           });
           setLoader(false);
@@ -189,7 +189,7 @@ export const Editor = ({ saved }) => {
             excalidrawAPI.addFiles(data.files);
           } else {
             excalidrawAPI.setToast({
-              message: "Adding images ...",
+              message: "Loading images ...",
               closable: false,
               duration: Infinity,
             });
@@ -488,10 +488,13 @@ export const Editor = ({ saved }) => {
     };
 
     file = await imageCompression(file, options);
-    const base64 = await fileToBase64(file);
 
-    // Load image to get width and height
-    let { width, height } = await getImageDimensions(base64);
+    const fileUrl = URL.createObjectURL(file);
+
+    let { width, height } = await getImageDimensions(fileUrl);
+    URL.revokeObjectURL(fileUrl);
+
+    const base64 = await fileToBase64(file);
 
     const imageId = generateUUID();
     const elementId = generateUUID();
@@ -665,12 +668,21 @@ export const Editor = ({ saved }) => {
           const imageHeight = await insertImage(imageFile, x, y, 0);
           y += imageHeight;
 
+          // MEMORY FIX 1: Immediately free canvas graphics memory
+          segmentCanvas.width = 0;
+          segmentCanvas.height = 0;
+
           excalidrawAPI.setToast({
             message: `PDF loading ${i + 1}/${numSegments} ${pageNum}/${numPages} pages.`,
             closable: true,
-            duration: 1000,
+            duration: 2000,
           });
         }
+
+        page.cleanup(); // MEMORY FIX 2: Free PDF.js page memory
+
+        // MEMORY FIX 3: Yield to the Garbage Collector so memory doesn't spike
+        await new Promise((resolve) => setTimeout(resolve, 50));
       }
 
       excalidrawAPI.setToast({
