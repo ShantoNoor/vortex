@@ -20,6 +20,8 @@ import {
   LockKeyhole,
   LockKeyholeOpen,
   PanelRight,
+  Pin,
+  PinOff,
   Sidebar as SidebarIcon,
   Tag,
 } from "lucide-react";
@@ -159,8 +161,6 @@ export const Editor = ({ saved }) => {
 
             const { active } = await roomRes.json();
             isActive = active;
-          } else {
-            isActive = false;
           }
         } catch (e) {}
 
@@ -175,7 +175,12 @@ export const Editor = ({ saved }) => {
 
           excalidrawAPI.updateScene({
             elements: data.elements,
-            appState: data.appState,
+            appState: {
+              ...data.appState,
+              activeTool: {
+                type: "hand",
+              },
+            },
             captureUpdate: CaptureUpdateAction.IMMEDIATELY,
           });
 
@@ -200,7 +205,7 @@ export const Editor = ({ saved }) => {
               excalidrawAPI.addFiles(file);
 
               excalidrawAPI.setToast({
-                message: `Adding ${i + 1}/${data.idList.length} images.`,
+                message: `Loading ${i + 1}/${data.idList.length} images...`,
                 closable: true,
                 duration: 1000,
               });
@@ -288,9 +293,7 @@ export const Editor = ({ saved }) => {
     });
 
     if (data.success) {
-      if (import.meta.env.VITE_ANDROID_BUILD) {
-        // newlyAddedFiles.forEach((file) => ids.add(file.id));
-
+      if (import.meta.env.VITE_ANDROID_BUILD && newlyAddedFiles.length > 0) {
         excalidrawAPI.setToast({
           message: `Saving images, please wait ...`,
           closable: false,
@@ -313,6 +316,8 @@ export const Editor = ({ saved }) => {
 
           ids.add(file.id);
         }
+      } else {
+        newlyAddedFiles.forEach((file) => ids.add(file.id));
       }
 
       if (activeFolder === null) {
@@ -351,28 +356,30 @@ export const Editor = ({ saved }) => {
     setAutoSave(true);
   };
 
-  const lockAllElements = () => {
+  const toggleLockOnAllExceptFreedrawElements = (locked) => {
     const elements = excalidrawAPI.getSceneElements();
 
     excalidrawAPI.updateScene({
       elements: elements.map((el) => {
-        return {
-          ...el,
-          locked: true,
-        };
+        return el.type !== "freedraw"
+          ? {
+              ...el,
+              locked,
+            }
+          : el;
       }),
       captureUpdate: CaptureUpdateAction.IMMEDIATELY,
     });
   };
 
-  const unlockAllElements = () => {
+  const toggleLockAllElements = (locked) => {
     const elements = excalidrawAPI.getSceneElements();
 
     excalidrawAPI.updateScene({
       elements: elements.map((el) => {
         return {
           ...el,
-          locked: false,
+          locked,
         };
       }),
       captureUpdate: CaptureUpdateAction.IMMEDIATELY,
@@ -714,9 +721,9 @@ export const Editor = ({ saved }) => {
         } else if (e.key === "/" || e.key === "w") {
           selectDirection("slide_down");
         } else if (e.key === "[") {
-          lockAllElements();
+          toggleLockAllElements(true);
         } else if (e.key === "]") {
-          unlockAllElements();
+          toggleLockAllElements(false);
         } else if (e.key === "b") {
           toggleSidebar();
         } else if (e.key === "u") {
@@ -856,20 +863,26 @@ export const Editor = ({ saved }) => {
           )}
           <MainMenu.Item
             icon={<LockKeyhole strokeWidth={1.5} />}
-            onClick={lockAllElements}
+            onClick={() => toggleLockAllElements(true)}
           >
             Lock All Elements
           </MainMenu.Item>
           <MainMenu.Item
             icon={<LockKeyholeOpen strokeWidth={1.5} />}
-            onClick={unlockAllElements}
+            onClick={() => toggleLockAllElements(false)}
           >
             Unlock All Elements
           </MainMenu.Item>
-          <MainMenu.Separator />
-          <MainMenu.DefaultItems.LoadScene />
-          <MainMenu.DefaultItems.Export />
-          <MainMenu.DefaultItems.SaveAsImage />
+          {!import.meta.env.VITE_ANDROID_BUILD ? (
+            <>
+              <MainMenu.Separator />
+              <MainMenu.DefaultItems.LoadScene />
+              <MainMenu.DefaultItems.Export />
+              <MainMenu.DefaultItems.SaveAsImage />
+            </>
+          ) : (
+            <></>
+          )}
           <MainMenu.Separator />
           <MainMenu.DefaultItems.ChangeCanvasBackground />
         </MainMenu>
@@ -913,6 +926,22 @@ export const Editor = ({ saved }) => {
                 onClick={() => autoSet("down")}
               >
                 <ChevronsDown className="size-4" />
+              </Button>
+
+              <Button
+                className="p-4 bg-[#28292c]! border! border-[#191919]!"
+                variant="outline"
+                onClick={() => toggleLockOnAllExceptFreedrawElements(true)}
+              >
+                <Pin className="size-4" />
+              </Button>
+
+              <Button
+                className="p-4 bg-[#28292c]! border! border-[#191919]!"
+                variant="outline"
+                onClick={() => toggleLockOnAllExceptFreedrawElements(false)}
+              >
+                <PinOff className="size-4" />
               </Button>
             </div>
             <div className="flex gap-2">
