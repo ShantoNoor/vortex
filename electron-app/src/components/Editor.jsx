@@ -183,6 +183,7 @@ export const Editor = ({ saved }) => {
             },
             captureUpdate: CaptureUpdateAction.IMMEDIATELY,
           });
+          setLoader(false);
 
           if (!import.meta.env.VITE_ANDROID_BUILD) {
             excalidrawAPI.addFiles(data.files);
@@ -217,10 +218,10 @@ export const Editor = ({ saved }) => {
             socket.emit("join-room", activeFolder);
         } else {
           setActiveFolder(null);
+          setLoader(false);
         }
 
         excalidrawAPI.setToast(null);
-        setLoader(false);
         saved.current = true;
       }
     }
@@ -935,7 +936,8 @@ export const Editor = ({ saved }) => {
               >
                 <Pin className="size-4" />
               </Button>
-
+            </div>
+            <div className="flex gap-2">
               <Button
                 className="p-4 bg-[#28292c]! border! border-[#191919]!"
                 variant="outline"
@@ -943,8 +945,7 @@ export const Editor = ({ saved }) => {
               >
                 <PinOff className="size-4" />
               </Button>
-            </div>
-            <div className="flex gap-2">
+
               <Button
                 className="p-4 bg-[#28292c]! border! border-[#191919]!"
                 variant="outline"

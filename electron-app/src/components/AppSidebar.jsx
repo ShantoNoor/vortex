@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/sidebar";
 
 import { uiStore } from "../lib/store";
-import { useEffect, useRef } from "react";
 
 export function AppSidebar({ saved }) {
   const { selectFolder, tree, savePath, setActiveFolder, activeFolder } =
@@ -78,8 +77,13 @@ export function AppSidebar({ saved }) {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
+          <SidebarGroup>
+            <SidebarGroupLabel>{savePath || ""}</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-orange-400">
+              {activeFolder || ""}
+            </SidebarGroupLabel>
+          </SidebarGroup>
           <SidebarGroup className="">
-            <SidebarGroupLabel>{savePath}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="min-w-screen">
                 {tree?.map((item, index) => (
@@ -99,30 +103,9 @@ function Tree({ item, saved }) {
   const [name, ...items] = Array.isArray(item) ? item : [item];
   const { setActiveFolder, activeFolder, autoSave } = uiStore();
 
-  const itemRef = useRef(null);
-
-  useEffect(() => {
-    if (typeof name !== "string" && name.path === activeFolder && itemRef.current) {
-      const timer = setTimeout(() => {
-        if (!itemRef.current) return;
-        const rect = itemRef.current.getBoundingClientRect();
-        const isInView = rect.top >= 0 && rect.bottom <= window.innerHeight;
-
-        if (!isInView) {
-          itemRef.current.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
-        }
-      }, 100); // Small delay to let collapsibles open first
-
-      return () => clearTimeout(timer);
-    }
-  }, [activeFolder, name]);
-
   if (typeof name !== "string") {
     return (
-      <SidebarMenuItem ref={itemRef}>
+      <SidebarMenuItem>
         <SidebarMenuButton
           isActive={name.path === activeFolder}
           className="data-[active=true]:bg-accent data-[active=true]:text-orange-400 data-[active=true]:hover:text-orange-400"

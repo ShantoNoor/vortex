@@ -155,6 +155,7 @@ fun readDirRecursive(dirPath: String): JSONArray {
     if (!dir.exists() || !dir.isDirectory) return result
 
     val items = dir.listFiles() ?: return result
+    items.sortBy { it.name }
 
     for (item in items) {
         val name = item.name
