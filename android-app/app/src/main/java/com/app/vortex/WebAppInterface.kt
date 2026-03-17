@@ -88,9 +88,12 @@ class WebAppInterface(private val webViewRef: WebView,
 
             val activeFolder = payload.optString("activeFolder", "")
 
-            val fileList = payload.optString("fileId", "")
+            val idListJsonArray = payload.optJSONArray("idList") ?: JSONArray()
             val idList = mutableListOf<String>()
-            idList.add(fileList)
+            for (i in 0 until idListJsonArray.length()) {
+                val fileId = idListJsonArray.getString(i)
+                idList.add((fileId))
+            }
 
             val isActive = payload.optBoolean("isActive", false)
 

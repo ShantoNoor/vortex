@@ -57,6 +57,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 pdfjsLib.GlobalWorkerOptions.enableWebGL = true;
 const chunkWidth = 2000;
 
+const batchSize = 10;
 let ids = new Set([]);
 
 const getBoundingBox = (el) => ({
@@ -183,7 +184,6 @@ export const Editor = ({ saved }) => {
             appState: data.appState,
             captureUpdate: CaptureUpdateAction.IMMEDIATELY,
           });
-          setLoader(false);
 
           if (!import.meta.env.VITE_ANDROID_BUILD) {
             excalidrawAPI.addFiles(data.files);
@@ -194,19 +194,21 @@ export const Editor = ({ saved }) => {
               duration: Infinity,
             });
 
-            for (let i = 0; i < data.idList.length; ++i) {
-              const fileId = data.idList[i];
-              const file = await window.api.getImage({
+            for (let i = 0; i < data.idList.length; i += batchSize) {
+              const chunk = data.idList.slice(i, i + batchSize);
+
+              const files = await window.api.getImage({
                 activeFolder,
                 savePath,
                 isActive,
-                fileId,
+                idList: chunk, // Sending the array of 10 IDs
               });
 
-              excalidrawAPI.addFiles(file);
+              excalidrawAPI.addFiles(files);
 
+              const currentCount = Math.min(i + batchSize, data.idList.length);
               excalidrawAPI.setToast({
-                message: `Loading ${i + 1}/${data.idList.length} images...`,
+                message: `Loading ${currentCount}/${data.idList.length} images...`,
                 closable: true,
                 duration: 1000,
               });
@@ -218,9 +220,9 @@ export const Editor = ({ saved }) => {
             socket.emit("join-room", activeFolder);
         } else {
           setActiveFolder(null);
-          setLoader(false);
         }
 
+        setLoader(false);
         excalidrawAPI.setToast(null);
         saved.current = true;
       }
@@ -301,21 +303,22 @@ export const Editor = ({ saved }) => {
           duration: Infinity,
         });
 
-        let j = 1;
-        for (let i = 0; i < newlyAddedFiles.length; ++i) {
-          const file = newlyAddedFiles[i];
+        for (let i = 0; i < newlyAddedFiles.length; i += batchSize) {
+          const chunk = newlyAddedFiles.slice(i, i + batchSize);
+
           const res = await window.api.saveImage({
             activeFolder: data.activeFolder,
-            fileList: [file],
+            fileList: chunk, // Sending the batch of 10
           });
 
+          chunk.forEach((file) => ids.add(file.id));
+
+          const currentCount = Math.min(i + batchSize, newlyAddedFiles.length);
           excalidrawAPI.setToast({
-            message: `Saved ${j++}/${newlyAddedFiles.length} images.`,
+            message: `Saved ${currentCount}/${newlyAddedFiles.length} images.`,
             closable: true,
             duration: 1000,
           });
-
-          ids.add(file.id);
         }
       } else {
         newlyAddedFiles.forEach((file) => ids.add(file.id));
