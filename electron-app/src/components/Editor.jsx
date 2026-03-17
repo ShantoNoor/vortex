@@ -184,6 +184,7 @@ export const Editor = ({ saved }) => {
             appState: data.appState,
             captureUpdate: CaptureUpdateAction.IMMEDIATELY,
           });
+          setLoader(false);
 
           if (!import.meta.env.VITE_ANDROID_BUILD) {
             excalidrawAPI.addFiles(data.files);
@@ -222,7 +223,6 @@ export const Editor = ({ saved }) => {
           setActiveFolder(null);
         }
 
-        setLoader(false);
         excalidrawAPI.setToast(null);
         saved.current = true;
       }
@@ -573,7 +573,7 @@ export const Editor = ({ saved }) => {
 
       excalidrawAPI.setToast({
         message: `Image ${i++} inserted successfully!`,
-        closable: true,
+        closable: false,
         duration: 2000,
       });
     }
@@ -591,7 +591,44 @@ export const Editor = ({ saved }) => {
     const files = e.target.files;
     if (!files.length) return;
 
-    insertImages(files);
+    if (import.meta.env.VITE_ANDROID_BUILD) {
+      if (files.length > 5) {
+        toast.error("⚠️ Maximum 5 images allowed");
+
+        // Clear the input so the user can try again
+        e.target.value = null;
+        return;
+      }
+
+      try {
+        excalidrawAPI.setToast({
+          message: `Reading files, please wait...`,
+          closable: false,
+          duration: Infinity,
+        });
+
+        const filePromises = Array.from(files).map(async (file) => {
+          const buffer = await file.arrayBuffer();
+          return new File([buffer], file.name, { type: file.type });
+        });
+
+        const bufferedFiles = await Promise.all(filePromises);
+        excalidrawAPI.setToast(null);
+        insertImages(bufferedFiles);
+      } catch (error) {
+        console.error("Error reading files:", error);
+        excalidrawAPI.setToast({
+          message: "Failed to read selected images.",
+          closable: true,
+          duration: 3000,
+        });
+      } finally {
+        // Clear the input so the user can try again
+        e.target.value = null;
+      }
+    } else {
+      insertImages(files);
+    }
   };
 
   const handlePDFImport = async (e) => {

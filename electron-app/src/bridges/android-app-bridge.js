@@ -56,14 +56,12 @@ if (import.meta.env.VITE_ANDROID_BUILD) {
         if (!res.isEmpty)
           return {
             success: false,
-            error: "Unable to Save.. Folder is not Empty",
+            error: "⚠️ Folder not empty",
           };
         if (!res.path.startsWith(payload.savePath))
           return {
             success: false,
-            error:
-              "Unable to Save.. Select a Empty Folder inside: " +
-              payload.savePath,
+            error: "⚠️ Select an empty folder inside: " + payload.savePath,
           };
         payload.activeFolder = res.path;
       } else return res;
