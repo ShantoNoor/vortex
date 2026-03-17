@@ -5,6 +5,7 @@
 # Gradle files
 .gradle/
 build/
+android-app/app/release
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -27,8 +28,8 @@ deploymentTargetDropDown.xml
 render.experimental.xml
 
 # Keystore files
-*.jks
 *.keystore
+# *.jks
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json
@@ -39,8 +40,4 @@ google-services.json
 ### Android Patch ###
 gen-external-apklibs
 
-# Replacement of .externalNativeBuild directories introduced
-# with Android Studio 3.5.
-
-# End of https://www.toptal.com/developers/gitignore/api/android
-
+android-app/app/src/main/assets/index.html

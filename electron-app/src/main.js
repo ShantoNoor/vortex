@@ -1,5 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu } from "electron";
 import path from "node:path";
+import fs from "fs/promises";
 import started from "electron-squirrel-startup";
 import {
   createRecord,
@@ -116,10 +117,33 @@ ipcMain.handle("save-file", async (_, payload) => {
       });
 
       if (result.canceled || !result.filePaths.length) {
-        return { success: false, reason: "canceled" };
+        return { success: false, error: "canceled" };
       }
 
-      activeFolder = result.filePaths[0];
+      const selectedFolder = result.filePaths[0];
+      const resolvedSavePath = path.resolve(savePath);
+      const resolvedSelected = path.resolve(selectedFolder);
+
+      // Check 1: Must be inside savePath (subdirectory, not equal)
+      const relative = path.relative(resolvedSavePath, resolvedSelected);
+      if (
+        relative === "" ||
+        relative.startsWith("..") ||
+        path.isAbsolute(relative)
+      ) {
+        return {
+          success: false,
+          error: "⚠️ Select an empty folder inside: " + savePath,
+        };
+      }
+
+      // Check 2: Must be empty
+      const files = await fs.readdir(resolvedSelected);
+      if (files.length > 0) {
+        return { success: false, error: "⚠️ Folder not empty" };
+      }
+
+      activeFolder = selectedFolder;
     } catch (error) {
       console.error("Failed to save file:", error);
       // Return the error to the renderer so the UI can show a notification
