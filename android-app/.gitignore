@@ -5,7 +5,7 @@
 # Gradle files
 .gradle/
 build/
-android-app/app/release
+/app/release
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -40,4 +40,4 @@ google-services.json
 ### Android Patch ###
 gen-external-apklibs
 
-android-app/app/src/main/assets/index.html
+/app/src/main/assets/index.html
