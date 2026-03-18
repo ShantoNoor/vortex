@@ -32,25 +32,98 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.graphics.toColorInt
 import java.io.File
+import java.io.FileOutputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
+import android.webkit.MimeTypeMap
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun FullScreenWebView(modifier: Modifier = Modifier, onReady: () -> Unit) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // Cleans up old cached images every time the WebView loads
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            try {
+                val cacheFiles = context.cacheDir.listFiles()
+                cacheFiles?.forEach { file ->
+                    // Only delete files we specifically created for the image picker
+                    if (file.name.startsWith("img_cache_")) {
+                        file.delete()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("WebView", "Failed to clear image cache: ${e.message}")
+            }
+        }
+    }
 
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
 
     // File upload handling
     var fileUploadCallback by remember { mutableStateOf<ValueCallback<Array<Uri>>?>(null) }
-    // For single file selection (e.g., <input type="file"> without "multiple")
-    val singleImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        fileUploadCallback?.onReceiveValue(if (uri != null) arrayOf(uri) else null)
-        fileUploadCallback = null
+
+    // Helper function to safely copy URIs to the app's cache directory
+    suspend fun copyUrisToCache(uris: List<Uri>): Array<Uri> {
+        return withContext(Dispatchers.IO) {
+            uris.mapNotNull { uri ->
+                try {
+                    val contentResolver = context.contentResolver
+                    val inputStream = contentResolver.openInputStream(uri) ?: return@mapNotNull null
+
+                    // 1. Get the actual MIME type (e.g., "image/jpeg") and find its extension
+                    val mimeType = contentResolver.getType(uri)
+                    val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "jpg" // default to jpg if unknown
+
+                    // 2. Append the extension to the file name
+                    val fileName = "img_cache_${System.currentTimeMillis()}.$extension"
+                    val tempFile = File(context.cacheDir, fileName)
+
+                    FileOutputStream(tempFile).use { outputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
+                    inputStream.close()
+
+                    Uri.fromFile(tempFile) // Return the permanent local file:// URI
+                } catch (e: Exception) {
+                    Log.e("WebView", "Failed to copy file to cache: ${e.message}")
+                    null
+                }
+            }.toTypedArray()
+        }
     }
-    // For multiple file selection (e.g., <input type="file" multiple>)
+
+    // For single file selection
+    val singleImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            coroutineScope.launch {
+                val cachedUris = copyUrisToCache(listOf(uri))
+                fileUploadCallback?.onReceiveValue(cachedUris)
+                fileUploadCallback = null
+            }
+        } else {
+            fileUploadCallback?.onReceiveValue(null)
+            fileUploadCallback = null
+        }
+    }
+
+    // For multiple file selection
     val multipleImagesLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
-        fileUploadCallback?.onReceiveValue(if (uris.isNotEmpty()) uris.toTypedArray() else null)
-        fileUploadCallback = null
+        if (uris.isNotEmpty()) {
+            coroutineScope.launch {
+                val cachedUris = copyUrisToCache(uris)
+                fileUploadCallback?.onReceiveValue(cachedUris)
+                fileUploadCallback = null
+            }
+        } else {
+            fileUploadCallback?.onReceiveValue(null)
+            fileUploadCallback = null
+        }
     }
 
     var currentFolderId by remember { mutableStateOf<Int?>(null) }
@@ -178,8 +251,6 @@ fun FullScreenWebView(modifier: Modifier = Modifier, onReady: () -> Unit) {
 
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
-                settings.allowFileAccess = true
-                settings.allowContentAccess = true
 
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,

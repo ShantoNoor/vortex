@@ -47,7 +47,6 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import * as pdfjsLib from "pdfjs-dist";
 import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-import { CopyButton } from "./CopyButton";
 import TagManager from "./TagManager";
 import TagViewer from "./TagViewer";
 import { checkHealth, socket } from "../lib/socket";
@@ -94,7 +93,6 @@ const initialData = {
 };
 
 export const Editor = ({ saved }) => {
-  const timeoutId = useRef(null);
   const imagesOpenRef = useRef(null);
   const [excalidrawAPI, setExcalidrawAPI] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -572,9 +570,9 @@ export const Editor = ({ saved }) => {
       y += height + gap;
 
       excalidrawAPI.setToast({
-        message: `Image ${i++} inserted successfully!`,
+        message: `Image ${i++}/${files.length} inserted successfully!`,
         closable: false,
-        duration: 2000,
+        duration: Infinity,
       });
     }
 
@@ -591,43 +589,18 @@ export const Editor = ({ saved }) => {
     const files = e.target.files;
     if (!files.length) return;
 
-    if (import.meta.env.VITE_ANDROID_BUILD) {
-      if (files.length > 5) {
-        toast.error("⚠️ Maximum 5 images allowed");
-
-        // Clear the input so the user can try again
-        e.target.value = null;
-        return;
+    try {
+      await insertImages(files);
+    } catch (error) {
+      console.error("Error inserting images:", error);
+      toast.error("Error inserting images" + error);
+    } finally {
+      // Safely trigger the Android cache cleanup
+      if (import.meta.env.VITE_ANDROID_BUILD) {
+        await window.api.clearImageCache();
       }
 
-      try {
-        excalidrawAPI.setToast({
-          message: `Reading files, please wait...`,
-          closable: false,
-          duration: Infinity,
-        });
-
-        const filePromises = Array.from(files).map(async (file) => {
-          const buffer = await file.arrayBuffer();
-          return new File([buffer], file.name, { type: file.type });
-        });
-
-        const bufferedFiles = await Promise.all(filePromises);
-        excalidrawAPI.setToast(null);
-        insertImages(bufferedFiles);
-      } catch (error) {
-        console.error("Error reading files:", error);
-        excalidrawAPI.setToast({
-          message: "Failed to read selected images.",
-          closable: true,
-          duration: 3000,
-        });
-      } finally {
-        // Clear the input so the user can try again
-        e.target.value = null;
-      }
-    } else {
-      insertImages(files);
+      e.target.value = null;
     }
   };
 
@@ -805,50 +778,12 @@ export const Editor = ({ saved }) => {
       <Excalidraw
         excalidrawAPI={(api) => setExcalidrawAPI(api)}
         initialData={initialData}
-        // onChange={(elements, appState, files) => {
-        //   if (activeFolder && autoSave && !import.meta.env.VITE_API_URL) {
-        //     if (timeoutId.current) {
-        //       clearTimeout(timeoutId.current);
-        //     }
-        //     timeoutId.current = setTimeout(() => {
-        //       handleSave(elements, appState, files);
-        //     }, 500);
-        //   }
-        // }}
         onChange={() => {
           if (saved.current) {
             saved.current = false;
           }
         }}
-        validateEmbeddable={(link) => true}
-        renderEmbeddable={(element, appState) => {
-          if (element.link.endsWith(".pdf")) {
-            return (
-              <webview
-                className="w-full h-full"
-                src={`${element.link}#view=FitH`}
-              ></webview>
-            );
-          }
-
-          if (element.link.endsWith(".mp4")) {
-            return (
-              <webview className="w-full h-full" src={element.link}></webview>
-            );
-          }
-
-          if (
-            element.link.startsWith("https://youtu.be/") &&
-            import.meta.env.VITE_API_URL
-          )
-            return (
-              <iframe
-                width="100%"
-                height="100%"
-                src={`https://www.youtube.com/embed/${element.link.split("/").at(-1)}`}
-              ></iframe>
-            );
-        }}
+        validateEmbeddable={(link) => false}
         renderTopRightUI={() => {
           return (
             <Button

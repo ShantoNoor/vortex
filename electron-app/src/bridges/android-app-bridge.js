@@ -43,6 +43,14 @@ if (import.meta.env.VITE_ANDROID_BUILD) {
     });
   };
 
+  window.api.clearImageCache = () => {
+    return new Promise((resolve, reject) => {
+      const id = window.promiseCounter++;
+      window.pendingPromises[id] = { resolve, reject };
+      window.android.clearImageCache(id);
+    });
+  };
+
   window.api.selectFolder = async () => {
     const res = await window.api.folderPicker();
     if (res.success) return await window.api.getFiles(res.path);

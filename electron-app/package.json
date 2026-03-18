@@ -12,7 +12,7 @@
     "publish": "electron-forge publish",
     "dev": "VITE_API_URL=http://localhost:5000 vite dev --config vite.renderer.config.mjs",
     "build": "rm -rf dist && VITE_API_URL=/api VITE_WEB_BUILD=true vite build --config vite.web.config.mjs && rm -rf /home/shanto/Documents/BCS/html/dist && cp -rf dist/ /home/shanto/Documents/BCS/html/",
-    "build-single-file": "rm -rf dist && rm -f ../android-app/app/src/main/assets/index.html && VITE_ANDROID_BUILD=true vite build --config vite.android.single-file.config.mjs && cp ./dist/index.html ../android-app/app/src/main/assets/index.html",
+    "android": "rm -rf dist && rm -f ../android-app/app/src/main/assets/index.html && VITE_ANDROID_BUILD=true vite build --config vite.android.single-file.config.mjs && cp ./dist/index.html ../android-app/app/src/main/assets/index.html",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
     "copy-index": "cp ./dist/index.html ../android-app/app/src/main/assets/index.html"
   },

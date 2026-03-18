@@ -112,6 +112,23 @@ class WebAppInterface(private val webViewRef: WebView,
         }
     }
 
+    @JavascriptInterface
+    fun clearImageCache(callbackId: Int) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val cacheFiles = context.cacheDir.listFiles()
+                cacheFiles?.forEach { file ->
+                    if (file.name.startsWith("img_cache_")) {
+                        file.delete()
+                    }
+                }
+                resolvePromise(callbackId, "Cache cleared successfully")
+            } catch (e: Exception) {
+                resolvePromise(callbackId, "Failed to clear cache: ${e.message}")
+            }
+        }
+    }
+
     // --- Database Handlers ---
 
     @JavascriptInterface
