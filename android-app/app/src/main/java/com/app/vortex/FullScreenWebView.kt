@@ -100,16 +100,8 @@ fun FullScreenWebView(modifier: Modifier = Modifier, onReady: () -> Unit) {
 
     // For single file selection
     val singleImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) {
-            coroutineScope.launch {
-                val cachedUris = copyUrisToCache(listOf(uri))
-                fileUploadCallback?.onReceiveValue(cachedUris)
-                fileUploadCallback = null
-            }
-        } else {
-            fileUploadCallback?.onReceiveValue(null)
-            fileUploadCallback = null
-        }
+        fileUploadCallback?.onReceiveValue(if (uri != null) arrayOf(uri) else null)
+        fileUploadCallback = null
     }
 
     // For multiple file selection
