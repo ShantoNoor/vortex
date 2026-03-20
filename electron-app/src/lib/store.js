@@ -29,7 +29,7 @@ export const uiStore = create(
           autoSave: false,
           reload: state.reload + 1,
         })),
-      selectFolder: async (reload = true) => {
+      selectFolder: async () => {
         const data = await window.api.selectFolder();
         if (data.success) {
           set({
@@ -37,8 +37,6 @@ export const uiStore = create(
             tree: data.tree,
             activeFolder: null,
           });
-
-          if (reload) window.location.reload();
         }
       },
       setLoading: (loading) => set(() => ({ loading })),

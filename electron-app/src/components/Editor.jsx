@@ -5,6 +5,7 @@ import {
   Footer,
   Sidebar,
   mutateElement,
+  WelcomeScreen,
 } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
 import {
@@ -801,13 +802,15 @@ export const Editor = ({ saved }) => {
         <MainMenu>
           <MainMenu.Item
             icon={<ArrowLeftToLine strokeWidth={1.5} />}
-            onClick={saveFile}
+            onSelect={saveFile}
+            shortcut="s"
           >
             Save
           </MainMenu.Item>
           <MainMenu.Item
             icon={<SidebarIcon strokeWidth={1.5} />}
-            onClick={toggleSidebar}
+            onSelect={toggleSidebar}
+            shortcut="b"
           >
             Toggle Sidebar
           </MainMenu.Item>
@@ -853,13 +856,15 @@ export const Editor = ({ saved }) => {
           )}
           <MainMenu.Item
             icon={<LockKeyhole strokeWidth={1.5} />}
-            onClick={() => toggleLockAllElements(true)}
+            onSelect={() => toggleLockAllElements(true)}
+            shortcut="["
           >
             Lock All Elements
           </MainMenu.Item>
           <MainMenu.Item
             icon={<LockKeyholeOpen strokeWidth={1.5} />}
-            onClick={() => toggleLockAllElements(false)}
+            onSelect={() => toggleLockAllElements(false)}
+            shortcut="]"
           >
             Unlock All Elements
           </MainMenu.Item>
@@ -891,6 +896,37 @@ export const Editor = ({ saved }) => {
             </Sidebar.Tab>
           </Sidebar.Tabs>
         </Sidebar>
+        <WelcomeScreen>
+          <WelcomeScreen.Center>
+            <WelcomeScreen.Center.Logo>vortex</WelcomeScreen.Center.Logo>
+            <WelcomeScreen.Center.Heading>
+              Organize Your World
+            </WelcomeScreen.Center.Heading>
+            <WelcomeScreen.Center.Menu>
+              <WelcomeScreen.Center.MenuItem
+                icon={<SidebarIcon strokeWidth={1.5} className="size-4" />}
+                onSelect={toggleSidebar}
+                shortcut="b"
+              >
+                Toggle Sidebar
+              </WelcomeScreen.Center.MenuItem>
+              <WelcomeScreen.Center.MenuItem
+                icon={<Images className="size-4" strokeWidth={1.5} />}
+                onSelect={() => imagesOpenRef.current.click()}
+              >
+                Insert Images
+              </WelcomeScreen.Center.MenuItem>
+              <WelcomeScreen.Center.MenuItem
+                icon={<FileText className="size-4" strokeWidth={1.5} />}
+                onSelect={() => {
+                  setPdfOpen(true);
+                }}
+              >
+                Import PDF
+              </WelcomeScreen.Center.MenuItem>
+            </WelcomeScreen.Center.Menu>
+          </WelcomeScreen.Center>
+        </WelcomeScreen>
         <Footer>
           <div className="ml-2 w-full flex justify-between">
             <div className="flex gap-2">

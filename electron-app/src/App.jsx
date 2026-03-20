@@ -29,11 +29,6 @@ export default function App() {
 
   useEffect(() => {
     async function run() {
-      if (import.meta.env.VITE_API_URL) {
-        await selectFolder(false);
-        return;
-      }
-
       if (savePath !== null) {
         const data = await window.api.getFiles(savePath);
         if (data.success) {
@@ -43,8 +38,10 @@ export default function App() {
           setSavePath(null);
           setActiveFolder(null);
         }
-        setLoadingFolder(false);
+      } else if (import.meta.env.VITE_API_URL) {
+        await selectFolder();
       }
+      setLoadingFolder(false);
     }
     run();
   }, []);
