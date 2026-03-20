@@ -149,8 +149,8 @@ export const Editor = ({ saved }) => {
 
         let isActive = false;
 
-        try {
-          if (!import.meta.env.VITE_ANDROID_BUILD) {
+        if (!import.meta.env.VITE_ANDROID_BUILD) {
+          try {
             const roomRes = await fetch(
               import.meta.env.VITE_API_URL
                 ? `${import.meta.env.VITE_API_URL}/is-room-active`
@@ -168,8 +168,10 @@ export const Editor = ({ saved }) => {
 
             const { active } = await roomRes.json();
             isActive = active;
+          } catch (e) {
+            console.log(e);
           }
-        } catch (e) {}
+        }
 
         const data = await window.api.openFile({
           activeFolder,
@@ -185,7 +187,6 @@ export const Editor = ({ saved }) => {
             appState: data.appState,
             captureUpdate: CaptureUpdateAction.IMMEDIATELY,
           });
-          setLoader(false);
 
           if (!import.meta.env.VITE_ANDROID_BUILD) {
             excalidrawAPI.addFiles(data.files);
@@ -217,15 +218,17 @@ export const Editor = ({ saved }) => {
             }
           }
 
-          setAutoSave(true);
           if (!import.meta.env.VITE_ANDROID_BUILD)
             socket.emit("join-room", activeFolder);
+
+          setAutoSave(true);
         } else {
           setActiveFolder(null);
         }
 
         excalidrawAPI.setToast(null);
         saved.current = true;
+        setLoader(false);
       }
     }
     run();
