@@ -51,6 +51,7 @@ import TagManager from "./TagManager";
 import TagViewer from "./TagViewer";
 import { checkHealth, socket } from "../lib/socket";
 import { toast } from "sonner";
+import { CopyButton } from "./CopyButton";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 pdfjsLib.GlobalWorkerOptions.enableWebGL = true;
@@ -99,6 +100,7 @@ export const Editor = ({ saved }) => {
   const [pdfOpen, setPdfOpen] = useState(false);
   const [selectedElementId, setSelectedElementId] = useState(null);
   const [tabHeader, setTabHeader] = useState("");
+  const [pdfName, setPdfName] = useState("");
 
   const {
     toggleSidebar,
@@ -984,7 +986,13 @@ export const Editor = ({ saved }) => {
         }}
       />
 
-      <Dialog open={pdfOpen} onOpenChange={setPdfOpen}>
+      <Dialog
+        open={pdfOpen}
+        onOpenChange={(open) => {
+          setPdfOpen(open);
+          if (!open) setPdfName("");
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Import PDF</DialogTitle>
@@ -992,12 +1000,25 @@ export const Editor = ({ saved }) => {
           </DialogHeader>
           <form className="space-y-2" onSubmit={handlePDFImport}>
             <Label>Select PDF File</Label>
-            <Input
-              name="pdfFile"
-              type="file"
-              id="SelectPDF"
-              accept="application/pdf"
-            />
+            <div className="flex">
+              <Input
+                name="pdfFile"
+                type="file"
+                id="SelectPDF"
+                accept="application/pdf"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  const fileName = file.name.replace(/\.pdf$/i, "");
+                  setPdfName(fileName);
+                }}
+              />
+              <CopyButton
+                value={pdfName}
+                size="size-6"
+                className="w-14 flex items-center justify-center"
+              />
+            </div>
             <Label htmlFor="SegmentPerPage">Segment Par Page</Label>
             <Input
               name="segmentPerPage"
@@ -1006,6 +1027,7 @@ export const Editor = ({ saved }) => {
               defaultValue={1}
               min={0}
             />
+
             <Button className="mt-2 w-full" variant="outline" type="submit">
               Import
             </Button>

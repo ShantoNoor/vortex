@@ -3,7 +3,7 @@ import { Button } from "./ui/button";
 import { cn } from "../lib/utils";
 import { useEffect, useState } from "react";
 
-export function CopyButton({ value, variant = "ghost", className }) {
+export function CopyButton({ value, variant = "ghost", className, size }) {
   const [hasCopied, setHasCopied] = useState(false);
 
   useEffect(() => {
@@ -14,7 +14,7 @@ export function CopyButton({ value, variant = "ghost", className }) {
 
   return (
     <span
-      className="cursor-pointer"
+      className={cn("cursor-pointer", className)}
       onClick={(e) => {
         e.stopPropagation();
         navigator.clipboard.writeText(value);
@@ -22,9 +22,9 @@ export function CopyButton({ value, variant = "ghost", className }) {
       }}
     >
       {hasCopied ? (
-        <CheckIcon className="size-4" />
+        <CheckIcon className={cn("size-4", size)} />
       ) : (
-        <ClipboardIcon className="size-4" />
+        <ClipboardIcon className={cn("size-4", size)} />
       )}
     </span>
   );
