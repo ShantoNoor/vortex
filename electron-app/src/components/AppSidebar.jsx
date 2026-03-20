@@ -62,21 +62,23 @@ export function AppSidebar({ saved }) {
     <>
       <SidebarProvider>
         <SidebarContent className="overflow-x-hidden h-dvh no-scrollbar">
-          <SidebarGroup>
-            <SidebarGroupLabel>Actions</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="min-w-screen">
-                {actions.map((item, index) => (
-                  <SidebarMenuItem key={index} onClick={item.onClick}>
-                    <SidebarMenuButton>
-                      {item.icon}
-                      {item.name}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          {!import.meta.env.VITE_API_URL && (
+            <SidebarGroup>
+              <SidebarGroupLabel>Actions</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="min-w-screen">
+                  {actions.map((item, index) => (
+                    <SidebarMenuItem key={index} onClick={item.onClick}>
+                      <SidebarMenuButton>
+                        {item.icon}
+                        {item.name}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
           <SidebarGroup>
             <SidebarGroupLabel>{savePath || ""}</SidebarGroupLabel>
             <SidebarGroupLabel className="text-orange-400">

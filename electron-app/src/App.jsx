@@ -22,12 +22,18 @@ export default function App() {
     setActiveFolder,
     showSidebarRight,
     setLoadingFolder,
+    selectFolder,
   } = uiStore();
 
   const saved = useRef(false);
 
   useEffect(() => {
     async function run() {
+      if (import.meta.env.VITE_API_URL) {
+        await selectFolder(false);
+        return;
+      }
+
       if (savePath !== null) {
         const data = await window.api.getFiles(savePath);
         if (data.success) {
