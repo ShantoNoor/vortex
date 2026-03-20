@@ -88,9 +88,6 @@ const boxDistance = (a, b) => {
 const initialData = {
   appState: {
     viewBackgroundColor: "#222",
-    activeTool: {
-      type: import.meta.env.VITE_ANDROID_BUILD ? "hand" : "selection",
-    },
   },
 };
 
@@ -184,7 +181,12 @@ export const Editor = ({ saved }) => {
 
           excalidrawAPI.updateScene({
             elements: data.elements,
-            appState: data.appState,
+            appState: {
+              ...data.appState,
+              activeTool: {
+                type: import.meta.env.VITE_ANDROID_BUILD ? "hand" : "selection",
+              },
+            },
             captureUpdate: CaptureUpdateAction.IMMEDIATELY,
           });
 
