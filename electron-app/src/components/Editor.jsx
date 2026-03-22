@@ -179,20 +179,19 @@ export const Editor = ({ saved }) => {
         if (data.success) {
           ids = new Set(data.idList);
 
+          const currentState = excalidrawAPI.getAppState();
           excalidrawAPI.updateScene({
             elements: data.elements,
-            appState: {
-              ...data.appState,
-              activeTool: {
-                type: import.meta.env.VITE_ANDROID_BUILD ? "hand" : "selection",
-              },
-            },
+            appState: data.appState,
             captureUpdate: CaptureUpdateAction.IMMEDIATELY,
           });
 
           if (!import.meta.env.VITE_ANDROID_BUILD) {
             excalidrawAPI.addFiles(data.files);
           } else {
+            excalidrawAPI.setActiveTool({
+              type: "hand",
+            });
             excalidrawAPI.setToast({
               message: "Loading images ...",
               closable: false,
