@@ -38,7 +38,7 @@ const io = new Server(server, {
   maxHttpBufferSize: 5e8, // 500 MB
 });
 
-const PORT = 5000;
+const PORT = 55000;
 const home = os.homedir();
 const folderPath = process.env.DEV
   ? path.join(home, "Downloads/test/")

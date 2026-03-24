@@ -24,7 +24,7 @@ export default function App() {
   } = uiStore();
 
   const saved = useRef(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -73,7 +73,7 @@ export default function App() {
             <ResizableHandle />
           </>
         )}
-        <ResizablePanel id="main" order={2}>
+        <ResizablePanel id="main" order={2} className="relative">
           {loading ? <Loader /> : <Editor saved={saved} />}
         </ResizablePanel>
         {showSidebarRight && (

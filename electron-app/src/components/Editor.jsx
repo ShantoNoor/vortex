@@ -27,7 +27,7 @@ import {
   Tag,
 } from "lucide-react";
 import { uiStore } from "../lib/store";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader } from "./Loader";
 import { Button } from "./ui/button";
 import {
@@ -72,12 +72,14 @@ const initialData = {
 
 export const Editor = ({ saved }) => {
   const imagesOpenRef = useRef(null);
+  const abortControllersRef = useRef({});
+
   const [excalidrawAPI, setExcalidrawAPI] = useState(null);
   const [pdfOpen, setPdfOpen] = useState(false);
   const [selectedElementId, setSelectedElementId] = useState(null); // for element select operations
   const [tabHeader, setTabHeader] = useState("");
   const [pdfName, setPdfName] = useState(""); // for copying name of pdf file while importing pdf file
-  const [loadingOverlay, setLoadingOverlay] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const {
     toggleSidebar,
@@ -89,6 +91,23 @@ export const Editor = ({ saved }) => {
     scrollElement,
     setScrollElement,
   } = uiStore();
+
+  const getAbortSignal = useCallback((operationName) => {
+    if (abortControllersRef.current[operationName]) {
+      abortControllersRef.current[operationName].abort(); // Cancel previous if running
+    }
+    const controller = new AbortController();
+    abortControllersRef.current[operationName] = controller;
+    return controller.signal;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      Object.values(abortControllersRef.current).forEach((controller) => {
+        controller.abort("Component unmounted");
+      });
+    };
+  }, []);
 
   // TODO : FIX
   useEffect(() => {
@@ -125,6 +144,8 @@ export const Editor = ({ saved }) => {
   }, [excalidrawAPI, socket]);
 
   const run = async (excalidrawAPI) => {
+    const signal = getAbortSignal("run");
+
     ids = new Set([]);
 
     if (activeFolder) {
@@ -133,7 +154,7 @@ export const Editor = ({ saved }) => {
         closable: false,
         duration: Infinity,
       });
-      setLoadingOverlay(true);
+      setLoading(true);
 
       let isActive = false;
 
@@ -142,7 +163,7 @@ export const Editor = ({ saved }) => {
           const roomRes = await fetch(
             import.meta.env.VITE_API_URL
               ? `${import.meta.env.VITE_API_URL}/is-room-active`
-              : "http://localhost:5000/is-room-active",
+              : "http://localhost:55000/is-room-active",
             {
               method: "POST",
               headers: {
@@ -151,21 +172,27 @@ export const Editor = ({ saved }) => {
               body: JSON.stringify({
                 activeFolder: activeFolder,
               }),
+              signal,
             },
           );
 
           const { active } = await roomRes.json();
           isActive = active;
         } catch (e) {
-          console.log(e);
+          if (e.name === "AbortError") return;
+          console.error(e);
         }
       }
+
+      if (signal.aborted) return;
 
       const data = await window.api.openFile({
         activeFolder,
         savePath,
         isActive, // used to programatically delete unwanted files...
       });
+
+      if (signal.aborted) return;
 
       if (data.success) {
         ids = new Set(data.idList);
@@ -190,6 +217,8 @@ export const Editor = ({ saved }) => {
           });
 
           for (let i = 0; i < data.idList.length; i += batchSize) {
+            if (signal.aborted) break;
+
             const chunk = data.idList.slice(i, i + batchSize);
 
             const files = await window.api.getImage({
@@ -198,6 +227,8 @@ export const Editor = ({ saved }) => {
               isActive,
               idList: chunk, // Sending the array of 10 IDs
             });
+
+            if (signal.aborted) break;
 
             excalidrawAPI.addFiles(files);
 
@@ -216,14 +247,18 @@ export const Editor = ({ saved }) => {
         setActiveFolder(null);
       }
 
-      excalidrawAPI.setToast(null);
-      setLoadingOverlay(false);
+      if (!signal.aborted) {
+        excalidrawAPI.setToast(null);
+        setLoading(false);
+      }
     }
 
     saved.current = true;
   };
 
   const handleSave = async (elements, appState, files) => {
+    const signal = getAbortSignal("save");
+
     const tid = toast.loading("Saving, please wait ...");
 
     const fileList = Object.values(files);
@@ -264,6 +299,11 @@ export const Editor = ({ saved }) => {
       savePath,
     });
 
+    if (signal.aborted) {
+      toast.dismiss(tid);
+      return;
+    }
+
     if (data.success) {
       if (import.meta.env.VITE_ANDROID_BUILD && newlyAddedFiles.length > 0) {
         excalidrawAPI.setToast({
@@ -273,12 +313,16 @@ export const Editor = ({ saved }) => {
         });
 
         for (let i = 0; i < newlyAddedFiles.length; i += batchSize) {
+          if (signal.aborted) break;
+
           const chunk = newlyAddedFiles.slice(i, i + batchSize);
 
           const res = await window.api.saveImage({
             activeFolder: data.activeFolder,
             fileList: chunk, // Sending the batch of 10
           });
+
+          if (signal.aborted) break;
 
           chunk.forEach((file) => ids.add(file.id));
 
@@ -296,7 +340,7 @@ export const Editor = ({ saved }) => {
       if (activeFolder === null) {
         setActiveFolder(data.activeFolder);
         const data2 = await window.api.getFiles(savePath);
-        if (data2.success) {
+        if (data2.success && !signal.aborted) {
           setTree(data2.tree);
         }
       }
@@ -311,9 +355,11 @@ export const Editor = ({ saved }) => {
           },
         });
 
-      toast.dismiss(tid);
-      toast.success("Save Successfull!..");
-      saved.current = true;
+      if (!signal.aborted) {
+        toast.dismiss(tid);
+        toast.success("Save Successfull!..");
+        saved.current = true;
+      }
       return;
     }
 
@@ -452,20 +498,25 @@ export const Editor = ({ saved }) => {
     }
   };
 
-  const insertImage = async (file, x, y, gap) => {
+  const insertImage = async (file, x, y, gap, signal) => {
     const options = {
       maxSizeMB: 1,
       useWebWorker: true,
+      signal, // Native abort support for browser-image-compression
     };
 
     file = await imageCompression(file, options);
+    if (signal?.aborted) return 0;
 
     const fileUrl = URL.createObjectURL(file);
 
     let { width, height } = await getImageDimensions(fileUrl);
     URL.revokeObjectURL(fileUrl);
 
+    if (signal?.aborted) return 0;
+
     const base64 = await fileToBase64(file);
+    if (signal?.aborted) return 0;
 
     const imageId = generateUUID();
     const elementId = generateUUID();
@@ -525,33 +576,49 @@ export const Editor = ({ saved }) => {
   };
 
   const insertImages = async (files, gap = 20) => {
+    const signal = getAbortSignal("insertImages");
+
     excalidrawAPI.setToast({
       message: `Inserting Images ...`,
       closable: false,
       duration: Infinity,
     });
-    setLoadingOverlay(true);
+    setLoading(true);
 
     let x = 0;
     let y = 0;
     let i = 1;
     for (const file of files) {
-      const height = await insertImage(file, x, y, gap);
-      y += height + gap;
+      if (signal.aborted) break; // Break loop if cancelled
 
-      excalidrawAPI.setToast({
-        message: `Image ${i++}/${files.length} inserted successfully!`,
-        closable: false,
-        duration: Infinity,
-      });
+      try {
+        const height = await insertImage(file, x, y, gap, signal);
+        if (signal.aborted) break;
+
+        y += height + gap;
+
+        excalidrawAPI.setToast({
+          message: `Image ${i++}/${files.length} inserted successfully!`,
+          closable: false,
+          duration: Infinity,
+        });
+      } catch (error) {
+        if (error.name === "AbortError") break;
+        throw error; // Re-throw if it's a real error
+      }
     }
 
-    setLoadingOverlay(false);
-    excalidrawAPI.setToast({
-      message: `Images inserted successfully!`,
-      closable: true,
-      duration: 2000,
-    });
+    if (!signal.aborted) {
+      setLoading(false);
+      excalidrawAPI.setToast({
+        message: `Images inserted successfully!`,
+        closable: true,
+        duration: 2000,
+      });
+    } else {
+      setLoading(false);
+      excalidrawAPI.setToast(null);
+    }
   };
 
   const handleImages = async (e) => {
@@ -578,6 +645,9 @@ export const Editor = ({ saved }) => {
     setPdfOpen(false);
     e.preventDefault();
 
+    const signal = getAbortSignal("pdfImport");
+    let loadingTask = null; // Declare up here to destroy on abort
+
     const form = e.target;
     const file = form.pdfFile.files[0];
     let numSegments = Number(form.segmentPerPage.value);
@@ -597,20 +667,26 @@ export const Editor = ({ saved }) => {
       duration: Infinity,
     });
 
-    setLoadingOverlay(true);
+    setLoading(true);
 
     let x = 0;
     let y = 0;
 
     try {
       const arrayBuffer = await file.arrayBuffer();
+      if (signal.aborted) return;
 
-      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
       const pdf = await loadingTask.promise;
 
       const numPages = pdf.numPages;
 
       for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+        if (signal.aborted) {
+          loadingTask.destroy();
+          break; // Stop parsing pages
+        }
+
         const page = await pdf.getPage(pageNum);
         const { width: pdf_width } = page.getViewport({
           scale: 1,
@@ -629,6 +705,12 @@ export const Editor = ({ saved }) => {
           numSegments = Math.ceil(totalHeight / chunkHeight);
 
         for (let i = 0; i < numSegments; i++) {
+          if (signal.aborted) {
+            page.cleanup();
+            loadingTask.destroy();
+            break;
+          }
+
           const segmentCanvas = document.createElement("canvas");
           const ctx = segmentCanvas.getContext("2d");
           const segmentHeight = Math.min(
@@ -647,11 +729,12 @@ export const Editor = ({ saved }) => {
             transform: transform,
           }).promise;
 
+          if (signal.aborted) break;
+
           const imageFile = await getCanvasBlob(segmentCanvas, "image/jpeg");
-          const imageHeight = await insertImage(imageFile, x, y, 0);
+          const imageHeight = await insertImage(imageFile, x, y, 0, signal);
           y += imageHeight;
 
-          // MEMORY FIX 1: Immediately free canvas graphics memory
           segmentCanvas.width = 0;
           segmentCanvas.height = 0;
 
@@ -662,26 +745,36 @@ export const Editor = ({ saved }) => {
           });
         }
 
-        page.cleanup(); // MEMORY FIX 2: Free PDF.js page memory
-
-        // MEMORY FIX 3: Yield to the Garbage Collector so memory doesn't spike
+        page.cleanup();
         await new Promise((resolve) => setTimeout(resolve, 50));
       }
 
-      excalidrawAPI.setToast({
-        message: `PDF loaded! ${numPages} pages.`,
-        closable: true,
-        duration: 2000,
-      });
-      setLoadingOverlay(false);
+      if (!signal.aborted) {
+        excalidrawAPI.setToast({
+          message: `PDF loaded! ${numPages} pages.`,
+          closable: true,
+          duration: 2000,
+        });
+      }
     } catch (error) {
-      setLoadingOverlay(false);
-      console.error("Error loading PDF:", error);
-      excalidrawAPI.setToast({
-        message: "Failed to load PDF.",
-        closable: true,
-        duration: 2000,
-      });
+      if (error.name === "AbortError" || signal.aborted) {
+        console.error("PDF Import Aborted");
+      } else {
+        console.error("Error loading PDF:", error);
+        excalidrawAPI.setToast({
+          message: "Failed to load PDF.",
+          closable: true,
+          duration: 2000,
+        });
+      }
+    } finally {
+      if (loadingTask && signal.aborted) {
+        try {
+          loadingTask.destroy();
+        } catch (e) {}
+      }
+      setLoading(false);
+      if (signal.aborted) excalidrawAPI.setToast(null);
     }
   };
 
@@ -1039,9 +1132,9 @@ export const Editor = ({ saved }) => {
           </form>
         </DialogContent>
       </Dialog>
-      {loadingOverlay && (
+      {loading && (
         <div className="absolute inset-0 z-10">
-          <Loader />
+          <Loader opacity="1" />
         </div>
       )}
     </>
