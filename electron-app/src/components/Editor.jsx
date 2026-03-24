@@ -31,10 +31,13 @@ import { useEffect, useRef, useState } from "react";
 import { Loader } from "./Loader";
 import { Button } from "./ui/button";
 import {
+  boxDistance,
   fileToBase64,
   generateUUID,
+  getBoundingBox,
   getCanvasBlob,
   getImageDimensions,
+  isOverlapping,
 } from "../lib/utils";
 import imageCompression from "browser-image-compression";
 import {
@@ -60,30 +63,6 @@ const chunkWidth = 2000;
 
 const batchSize = 10;
 let ids = new Set([]);
-
-const getBoundingBox = (el) => ({
-  left: el.x,
-  right: el.x + el.width,
-  top: el.y,
-  bottom: el.y + el.height,
-});
-
-const isOverlapping = (a, b) => {
-  return !(
-    a.right <= b.left ||
-    a.left >= b.right ||
-    a.bottom <= b.top ||
-    a.top >= b.bottom
-  );
-};
-
-const boxDistance = (a, b) => {
-  const dx = Math.max(b.left - a.right, a.left - b.right, 0);
-
-  const dy = Math.max(b.top - a.bottom, a.top - b.bottom, 0);
-
-  return dx * dx + dy * dy;
-};
 
 const initialData = {
   appState: {

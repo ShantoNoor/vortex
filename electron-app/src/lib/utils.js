@@ -74,7 +74,32 @@ export function getCanvasBlob(canvas, mimeType = "image/png", quality = 0.9) {
         }
       },
       mimeType,
-      quality
+      quality,
     );
   });
+}
+export function getBoundingBox(el) {
+  return {
+    left: el.x,
+    right: el.x + el.width,
+    top: el.y,
+    bottom: el.y + el.height,
+  };
+}
+
+export function isOverlapping(a, b) {
+  return !(
+    a.right <= b.left ||
+    a.left >= b.right ||
+    a.bottom <= b.top ||
+    a.top >= b.bottom
+  );
+}
+
+export function boxDistance(a, b) {
+  const dx = Math.max(b.left - a.right, a.left - b.right, 0);
+
+  const dy = Math.max(b.top - a.bottom, a.top - b.bottom, 0);
+
+  return dx * dx + dy * dy;
 }
