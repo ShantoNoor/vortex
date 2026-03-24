@@ -13,15 +13,13 @@ import {
   searchTagContains,
   searchTagInActiveFolder,
   updateRecord,
-} from "./core-lib/db.js";
-import {
   selectFolder,
   getFilesfs,
   saveFile,
   openFile,
   joinPath,
   relativePath,
-} from "./core-lib/fs-helper.js";
+} from "vortex-core-lib-js";
 
 if (started) {
   app.quit();
