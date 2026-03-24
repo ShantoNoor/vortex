@@ -10,6 +10,7 @@ export const uiStore = create(
       tree: null,
       activeFolder: null,
       scrollElement: null,
+      sceneLoaded: false,
       toggleSidebar: () =>
         set((state) => ({ showSidebar: !state.showSidebar })),
       toggleRightSidebar: () =>
@@ -17,9 +18,11 @@ export const uiStore = create(
       openSidebar: () => set(() => ({ showSidebar: true })),
       setSavePath: (path) => set(() => ({ savePath: path })),
       setTree: (tree) => set(() => ({ tree })),
+      setSceneLoaded: (sceneLoaded) => set(() => ({ sceneLoaded })),
       setActiveFolder: (fileName) =>
         set((state) => ({
           activeFolder: fileName,
+          sceneLoaded: false,
         })),
       selectFolder: async () => {
         const data = await window.api.selectFolder();

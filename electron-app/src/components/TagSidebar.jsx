@@ -21,7 +21,13 @@ const TagSidebar = ({ saved }) => {
   useEffect(() => {
     (async function () {
       if (activeFolder && savePath) {
-        const res = await window.api.relativePath(savePath, activeFolder);
+        let res = await window.api.relativePath(savePath, activeFolder);
+        for (let i = 0; i < 5 && typeof res !== "string"; ++i) {
+          res = await window.api.relativePath(savePath, activeFolder);
+        }
+        if (typeof res !== "string") {
+          alert("Something went worng, try opening the sidebar again ...");
+        }
         setRelativeActiveFolder(res);
       }
     })();
@@ -97,6 +103,11 @@ const TagSidebar = ({ saved }) => {
               savePath,
               t.activeFolder,
             ]);
+
+            if (typeof tactiveFolder !== "string") {
+              return alert("Something went wrong, try again ...");
+            }
+
             if (tactiveFolder === activeFolder) {
               setScrollElement(t.element);
             } else {

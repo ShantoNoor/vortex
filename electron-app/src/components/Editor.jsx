@@ -94,6 +94,8 @@ export const Editor = ({ saved }) => {
     savePath,
     scrollElement,
     setScrollElement,
+    sceneLoaded,
+    setSceneLoaded,
   } = uiStore();
 
   const getAbortSignal = useCallback((operationName) => {
@@ -113,15 +115,15 @@ export const Editor = ({ saved }) => {
     };
   }, []);
 
-  // TODO : FIX
   useEffect(() => {
-    if (scrollElement) {
+    if (sceneLoaded && scrollElement) {
       excalidrawAPI.scrollToContent(scrollElement, {
         fitToContent: true,
       });
+
       setScrollElement(null);
     }
-  }, [scrollElement]);
+  }, [sceneLoaded, scrollElement]);
 
   useEffect(() => {
     if (!socket || !excalidrawAPI) return;
@@ -258,8 +260,9 @@ export const Editor = ({ saved }) => {
       }
     }
 
-    setLoading(false);
     saved.current = true;
+    setLoading(false);
+    setSceneLoaded(true);
   };
 
   const handleSave = async (elements, appState, files) => {
