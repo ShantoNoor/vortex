@@ -64,9 +64,12 @@ const chunkWidth = 2000;
 const batchSize = 10;
 let ids = new Set([]);
 
+// sm: 16, md: 20, lg: 28, xl: 36,
 const initialData = {
   appState: {
     viewBackgroundColor: "#222",
+    currentItemStrokeColor: "#FFF",
+    currentItemFontSize: 36,
   },
 };
 

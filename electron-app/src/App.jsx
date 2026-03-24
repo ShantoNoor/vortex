@@ -55,17 +55,14 @@ export default function App() {
     <>
       <title>{activeFolder || "Select Folder"}</title>
 
-      <ResizablePanelGroup
-        autoSaveId="persistence"
-        direction="horizontal"
-        className="min-h-dvh"
-      >
+      <ResizablePanelGroup direction="horizontal" className="min-h-dvh">
         {showSidebar && (
           <>
             <ResizablePanel
               className="bg-[#111]"
               id="sidebar"
-              defaultSize={20}
+              defaultSize={200}
+              minSize={100}
               order={1}
             >
               <AppSidebar saved={saved} />
@@ -82,7 +79,8 @@ export default function App() {
             <ResizablePanel
               className="bg-[#111]"
               id="sidebar-right"
-              defaultSize={20}
+              defaultSize={300}
+              minSize={300}
               order={3}
             >
               <TagSidebar saved={saved} />
