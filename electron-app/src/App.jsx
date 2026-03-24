@@ -30,7 +30,7 @@ export default function App() {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-    }, 10);
+    }, 100);
   }, [activeFolder]);
 
   useEffect(() => {

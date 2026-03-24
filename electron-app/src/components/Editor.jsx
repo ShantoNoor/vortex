@@ -79,7 +79,8 @@ export const Editor = ({ saved }) => {
   const [selectedElementId, setSelectedElementId] = useState(null); // for element select operations
   const [tabHeader, setTabHeader] = useState("");
   const [pdfName, setPdfName] = useState(""); // for copying name of pdf file while importing pdf file
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadingOpacity, setLoadingOpacity] = useState("1");
 
   const {
     toggleSidebar,
@@ -147,6 +148,8 @@ export const Editor = ({ saved }) => {
     const signal = getAbortSignal("run");
 
     ids = new Set([]);
+
+    setLoadingOpacity("0.8");
 
     if (activeFolder) {
       excalidrawAPI.setToast({
@@ -249,10 +252,10 @@ export const Editor = ({ saved }) => {
 
       if (!signal.aborted) {
         excalidrawAPI.setToast(null);
-        setLoading(false);
       }
     }
 
+    setLoading(false);
     saved.current = true;
   };
 
@@ -723,6 +726,8 @@ export const Editor = ({ saved }) => {
 
           const transform = [1, 0, 0, 1, 0, Math.ceil(-i * chunkHeight)];
 
+          console.log("hi");
+
           await page.render({
             canvasContext: ctx,
             viewport: viewport,
@@ -1134,7 +1139,7 @@ export const Editor = ({ saved }) => {
       </Dialog>
       {loading && (
         <div className="absolute inset-0 z-10">
-          <Loader opacity="1" />
+          <Loader opacity={loadingOpacity} />
         </div>
       )}
     </>
