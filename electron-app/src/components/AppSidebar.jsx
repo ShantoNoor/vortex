@@ -103,7 +103,7 @@ export function AppSidebar({ saved }) {
 
 function Tree({ item, saved }) {
   const [name, ...items] = Array.isArray(item) ? item : [item];
-  const { setActiveFolder, activeFolder, autoSave } = uiStore();
+  const { setActiveFolder, activeFolder } = uiStore();
 
   if (typeof name !== "string") {
     return (
@@ -133,9 +133,6 @@ function Tree({ item, saved }) {
           <FilePenLine />
           {name.name}
         </SidebarMenuButton>
-        {/* {name.path === activeFolder && autoSave && (
-          <SidebarMenuBadge>A</SidebarMenuBadge>
-        )} */}
       </SidebarMenuItem>
     );
   }

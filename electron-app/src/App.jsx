@@ -6,7 +6,7 @@ import {
 import { Editor } from "./components/Editor";
 import { uiStore } from "./lib/store";
 import { AppSidebar } from "./components/AppSidebar";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader } from "./components/Loader";
 import TagSidebar from "./components/TagSidebar";
 import { Toaster } from "./components/ui/sonner";
@@ -17,15 +17,21 @@ export default function App() {
     setTree,
     savePath,
     setSavePath,
-    loading,
     activeFolder,
     setActiveFolder,
     showSidebarRight,
-    setLoadingFolder,
     selectFolder,
   } = uiStore();
 
   const saved = useRef(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+    }, 10);
+  }, [activeFolder]);
 
   useEffect(() => {
     async function run() {
@@ -41,7 +47,6 @@ export default function App() {
       } else if (import.meta.env.VITE_API_URL) {
         await selectFolder();
       }
-      setLoadingFolder(false);
     }
     run();
   }, []);
@@ -69,7 +74,7 @@ export default function App() {
           </>
         )}
         <ResizablePanel id="main" order={2}>
-          <Editor saved={saved} />
+          {loading ? <Loader /> : <Editor saved={saved} />}
         </ResizablePanel>
         {showSidebarRight && (
           <>
@@ -85,11 +90,7 @@ export default function App() {
           </>
         )}
       </ResizablePanelGroup>
-      {loading && (
-        <div className="absolute inset-0 z-10">
-          <Loader />
-        </div>
-      )}
+
       <Toaster
         theme="dark"
         position="top-right"

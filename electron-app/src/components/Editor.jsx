@@ -73,11 +73,11 @@ const initialData = {
 export const Editor = ({ saved }) => {
   const imagesOpenRef = useRef(null);
   const [excalidrawAPI, setExcalidrawAPI] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [pdfOpen, setPdfOpen] = useState(false);
-  const [selectedElementId, setSelectedElementId] = useState(null);
+  const [selectedElementId, setSelectedElementId] = useState(null); // for element select operations
   const [tabHeader, setTabHeader] = useState("");
-  const [pdfName, setPdfName] = useState("");
+  const [pdfName, setPdfName] = useState(""); // for copying name of pdf file while importing pdf file
+  const [loadingOverlay, setLoadingOverlay] = useState(true);
 
   const {
     toggleSidebar,
@@ -86,133 +86,19 @@ export const Editor = ({ saved }) => {
     activeFolder,
     setActiveFolder,
     savePath,
-    autoSave,
-    setAutoSave,
-    reload,
-    setLoading: setLoader,
     scrollElement,
     setScrollElement,
-    loadingFolder,
   } = uiStore();
 
+  // TODO : FIX
   useEffect(() => {
-    if (scrollElement && autoSave) {
+    if (scrollElement) {
       excalidrawAPI.scrollToContent(scrollElement, {
         fitToContent: true,
       });
       setScrollElement(null);
     }
-  }, [scrollElement, autoSave]);
-
-  useEffect(() => {
-    setLoading(true);
-    ids = new Set([]);
-
-    setTimeout(() => {
-      setLoading(false);
-    }, 10);
-  }, [activeFolder, reload]);
-
-  useEffect(() => {
-    async function run() {
-      if (!loadingFolder && activeFolder && excalidrawAPI) {
-        excalidrawAPI.setToast({
-          message: `Loading, please wait ...`,
-          closable: false,
-          duration: Infinity,
-        });
-        setLoader(true);
-
-        let isActive = false;
-
-        if (!import.meta.env.VITE_ANDROID_BUILD) {
-          try {
-            const roomRes = await fetch(
-              import.meta.env.VITE_API_URL
-                ? `${import.meta.env.VITE_API_URL}/is-room-active`
-                : "http://localhost:5000/is-room-active",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  activeFolder: activeFolder,
-                }),
-              },
-            );
-
-            const { active } = await roomRes.json();
-            isActive = active;
-          } catch (e) {
-            console.log(e);
-          }
-        }
-
-        const data = await window.api.openFile({
-          activeFolder,
-          savePath,
-          isActive, // used to programatically delete unwanted files...
-        });
-
-        if (data.success) {
-          ids = new Set(data.idList);
-
-          const currentState = excalidrawAPI.getAppState();
-          excalidrawAPI.updateScene({
-            elements: data.elements,
-            appState: data.appState,
-            captureUpdate: CaptureUpdateAction.IMMEDIATELY,
-          });
-
-          if (!import.meta.env.VITE_ANDROID_BUILD) {
-            excalidrawAPI.addFiles(data.files);
-          } else {
-            excalidrawAPI.setActiveTool({
-              type: "hand",
-            });
-            excalidrawAPI.setToast({
-              message: "Loading images ...",
-              closable: false,
-              duration: Infinity,
-            });
-
-            for (let i = 0; i < data.idList.length; i += batchSize) {
-              const chunk = data.idList.slice(i, i + batchSize);
-
-              const files = await window.api.getImage({
-                activeFolder,
-                savePath,
-                isActive,
-                idList: chunk, // Sending the array of 10 IDs
-              });
-
-              excalidrawAPI.addFiles(files);
-
-              const currentCount = Math.min(i + batchSize, data.idList.length);
-              excalidrawAPI.setToast({
-                message: `Loading ${currentCount}/${data.idList.length} images...`,
-                closable: true,
-                duration: 1000,
-              });
-            }
-          }
-
-          if (!import.meta.env.VITE_ANDROID_BUILD)
-            socket.emit("join-room", activeFolder);
-
-          setAutoSave(true);
-        } else {
-          setActiveFolder(null);
-        }
-
-        excalidrawAPI.setToast(null);
-        saved.current = true;
-        setLoader(false);
-      }
-    }
-    run();
-  }, [excalidrawAPI, loadingFolder]);
+  }, [scrollElement]);
 
   useEffect(() => {
     if (!socket || !excalidrawAPI) return;
@@ -237,6 +123,105 @@ export const Editor = ({ saved }) => {
       socket.off("merge", handleMerge);
     };
   }, [excalidrawAPI, socket]);
+
+  const run = async (excalidrawAPI) => {
+    ids = new Set([]);
+
+    if (activeFolder) {
+      excalidrawAPI.setToast({
+        message: `Loading, please wait ...`,
+        closable: false,
+        duration: Infinity,
+      });
+      setLoadingOverlay(true);
+
+      let isActive = false;
+
+      if (!import.meta.env.VITE_ANDROID_BUILD) {
+        try {
+          const roomRes = await fetch(
+            import.meta.env.VITE_API_URL
+              ? `${import.meta.env.VITE_API_URL}/is-room-active`
+              : "http://localhost:5000/is-room-active",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                activeFolder: activeFolder,
+              }),
+            },
+          );
+
+          const { active } = await roomRes.json();
+          isActive = active;
+        } catch (e) {
+          console.log(e);
+        }
+      }
+
+      const data = await window.api.openFile({
+        activeFolder,
+        savePath,
+        isActive, // used to programatically delete unwanted files...
+      });
+
+      if (data.success) {
+        ids = new Set(data.idList);
+
+        const currentState = excalidrawAPI.getAppState();
+        excalidrawAPI.updateScene({
+          elements: data.elements,
+          appState: data.appState,
+          captureUpdate: CaptureUpdateAction.IMMEDIATELY,
+        });
+
+        if (!import.meta.env.VITE_ANDROID_BUILD) {
+          excalidrawAPI.addFiles(data.files);
+        } else {
+          excalidrawAPI.setActiveTool({
+            type: "hand",
+          });
+          excalidrawAPI.setToast({
+            message: "Loading images ...",
+            closable: false,
+            duration: Infinity,
+          });
+
+          for (let i = 0; i < data.idList.length; i += batchSize) {
+            const chunk = data.idList.slice(i, i + batchSize);
+
+            const files = await window.api.getImage({
+              activeFolder,
+              savePath,
+              isActive,
+              idList: chunk, // Sending the array of 10 IDs
+            });
+
+            excalidrawAPI.addFiles(files);
+
+            const currentCount = Math.min(i + batchSize, data.idList.length);
+            excalidrawAPI.setToast({
+              message: `Loading ${currentCount}/${data.idList.length} images...`,
+              closable: true,
+              duration: 1000,
+            });
+          }
+        }
+
+        if (!import.meta.env.VITE_ANDROID_BUILD)
+          socket.emit("join-room", activeFolder);
+      } else {
+        setActiveFolder(null);
+      }
+
+      excalidrawAPI.setToast(null);
+      setLoadingOverlay(false);
+    }
+
+    saved.current = true;
+  };
 
   const handleSave = async (elements, appState, files) => {
     const tid = toast.loading("Saving, please wait ...");
@@ -341,7 +326,6 @@ export const Editor = ({ saved }) => {
     const appState = excalidrawAPI.getAppState();
     const files = excalidrawAPI.getFiles();
     handleSave(elements, appState, files);
-    setAutoSave(true);
   };
 
   const toggleLockOnAllExceptFreedrawElements = (locked) => {
@@ -546,7 +530,7 @@ export const Editor = ({ saved }) => {
       closable: false,
       duration: Infinity,
     });
-    setLoader(true);
+    setLoadingOverlay(true);
 
     let x = 0;
     let y = 0;
@@ -562,7 +546,7 @@ export const Editor = ({ saved }) => {
       });
     }
 
-    setLoader(false);
+    setLoadingOverlay(false);
     excalidrawAPI.setToast({
       message: `Images inserted successfully!`,
       closable: true,
@@ -613,7 +597,7 @@ export const Editor = ({ saved }) => {
       duration: Infinity,
     });
 
-    setLoader(true);
+    setLoadingOverlay(true);
 
     let x = 0;
     let y = 0;
@@ -689,9 +673,9 @@ export const Editor = ({ saved }) => {
         closable: true,
         duration: 2000,
       });
-      setLoader(false);
+      setLoadingOverlay(false);
     } catch (error) {
-      setLoader(false);
+      setLoadingOverlay(false);
       console.error("Error loading PDF:", error);
       excalidrawAPI.setToast({
         message: "Failed to load PDF.",
@@ -714,6 +698,7 @@ export const Editor = ({ saved }) => {
     }
   };
 
+  // Want to Revome : TODO
   useEffect(() => {
     const handler = (e) => {
       const isTyping =
@@ -755,14 +740,15 @@ export const Editor = ({ saved }) => {
     return () => window.removeEventListener("keydown", handler);
   }, [excalidrawAPI]);
 
-  if (loading) {
-    return <Loader />;
-  }
-
   return (
     <>
       <Excalidraw
-        excalidrawAPI={(api) => setExcalidrawAPI(api)}
+        onExcalidrawAPI={(api) => {
+          api?.onEvent("editor:mount", async ({ excalidrawAPI, container }) => {
+            setExcalidrawAPI(excalidrawAPI);
+            await run(excalidrawAPI);
+          });
+        }}
         initialData={initialData}
         onChange={() => {
           if (saved.current) {
@@ -1053,6 +1039,11 @@ export const Editor = ({ saved }) => {
           </form>
         </DialogContent>
       </Dialog>
+      {loadingOverlay && (
+        <div className="absolute inset-0 z-10">
+          <Loader />
+        </div>
+      )}
     </>
   );
 };

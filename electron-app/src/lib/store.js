@@ -9,25 +9,17 @@ export const uiStore = create(
       savePath: null,
       tree: null,
       activeFolder: null,
-      autoSave: false,
-      reload: 0,
-      loading: false,
       scrollElement: null,
-      loadingFolder: true,
       toggleSidebar: () =>
         set((state) => ({ showSidebar: !state.showSidebar })),
-      setLoadingFolder: (loadingFolder) => set(() => ({ loadingFolder })),
       toggleRightSidebar: () =>
         set((state) => ({ showSidebarRight: !state.showSidebarRight })),
       openSidebar: () => set(() => ({ showSidebar: true })),
       setSavePath: (path) => set(() => ({ savePath: path })),
       setTree: (tree) => set(() => ({ tree })),
-      setAutoSave: (autoSave) => set(() => ({ autoSave })),
       setActiveFolder: (fileName) =>
         set((state) => ({
           activeFolder: fileName,
-          autoSave: false,
-          reload: state.reload + 1,
         })),
       selectFolder: async () => {
         const data = await window.api.selectFolder();
@@ -39,7 +31,6 @@ export const uiStore = create(
           });
         }
       },
-      setLoading: (loading) => set(() => ({ loading })),
       setScrollElement: (scrollElement) => set(() => ({ scrollElement })),
     }),
     {
