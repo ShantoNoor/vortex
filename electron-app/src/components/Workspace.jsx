@@ -17,7 +17,7 @@ export default function Workspace({ saved }) {
   const isPdf = activeFolder?.toLowerCase().endsWith(".pdf");
 
   if (isPdf) {
-    return <PdfViewer key={sessionKey} fileId={activeFolder} />;
+    return <PdfViewer key={sessionKey} pdfPath={activeFolder} />;
   }
 
   return <Editor key={sessionKey} saved={saved} />;

@@ -141,3 +141,50 @@ export function joinPath(data) {
 export function relativePath(savePath, activeFolder) {
   return path.relative(savePath, activeFolder);
 }
+
+export async function openPdf(pdfPath) {
+  try {
+    const pdfBuffer = await fs.readFile(pdfPath);
+    const pdfBase64 = pdfBuffer.toString("base64");
+    const pdfName = path.basename(pdfPath);
+
+    return {
+      success: true,
+      pdfBase64: pdfBase64,
+      pdfName: pdfName,
+    };
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return { success: false, error: "PDF file not found" };
+    }
+    console.error("Error opening PDF:", error);
+    return { success: false, error: "Failed to read PDF file" };
+  }
+}
+
+export async function savePdf(payload) {
+  try {
+    const { pdfBase64, pdfPath, pdfName } = payload;
+
+    if (!pdfBase64 || !pdfPath) {
+      return { success: false, error: "pdfBase64 and pdfPath are required" };
+    }
+
+    const pdfBuffer = Buffer.from(pdfBase64, "base64");
+
+    // Ensure the directory exists (create if needed)
+    const directory = path.dirname(pdfPath);
+    await fs.mkdir(directory, { recursive: true });
+
+    // Write the file (overwrites if exists)
+    await fs.writeFile(pdfPath, pdfBuffer);
+
+    return {
+      success: true,
+      pdfName: pdfName,
+    };
+  } catch (error) {
+    console.error("Error saving PDF:", error);
+    return { success: false, error: "Failed to save PDF file" };
+  }
+}

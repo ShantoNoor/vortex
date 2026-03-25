@@ -2,7 +2,7 @@
 
 ![cover.png](cover.png)
 
-# Vortex is my personal Knowledge Management System (KMS), designed to organize ideas, documents, and workflows visually. It is built around **Excalidraw**, giving me a fast, flexible, and intuitive canvas for thought.
+Vortex is my personal Knowledge Management System (KMS), designed to organize ideas, documents, and workflows visually. It is built around **Excalidraw**, giving me a fast, flexible, and intuitive canvas for thought.
 
 ## ✨ Features
 

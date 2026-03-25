@@ -119,3 +119,8 @@ export function boxDistance(a, b) {
 
   return dx * dx + dy * dy;
 }
+
+
+export function isGroupItem(item) {
+  return item.type === "group";
+}

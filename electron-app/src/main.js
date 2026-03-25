@@ -19,6 +19,8 @@ import {
   openFile,
   joinPath,
   relativePath,
+  openPdf,
+  savePdf,
 } from "vortex-core-lib-js";
 
 if (started) {
@@ -172,3 +174,6 @@ ipcMain.handle("path:join", (_, data) => joinPath(data));
 ipcMain.handle("path:relative", (_, savePath, activeFolder) =>
   relativePath(savePath, activeFolder),
 );
+
+ipcMain.handle("open-pdf", async (_, pdfPath) => await openPdf(pdfPath));
+ipcMain.handle("save-pdf", async (_, payload) => await savePdf(payload));

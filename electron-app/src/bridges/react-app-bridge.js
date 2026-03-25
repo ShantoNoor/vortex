@@ -80,6 +80,40 @@ if (URI) {
         return { success: false, error: error.message };
       }
     },
+    openPdf: async (pdfPath) => {
+      try {
+        const response = await fetch(`${URI}/open-pdf`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            pdfPath,
+          }),
+        });
+
+        return await response.json();
+      } catch (error) {
+        console.error("Error:", error);
+        return { success: false, error: error.message };
+      }
+    },
+    savePdf: async (payload) => {
+      try {
+        const response = await fetch(`${URI}/save-pdf`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        return await response.json();
+      } catch (error) {
+        console.error("Error:", error);
+        return { success: false, error: error.message };
+      }
+    },
   };
 
   window.db = {

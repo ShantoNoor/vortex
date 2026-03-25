@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld("api", {
   joinPath: (data) => ipcRenderer.invoke("path:join", data),
   relativePath: (savePath, activeFolder) =>
     ipcRenderer.invoke("path:relative", savePath, activeFolder),
+  openPdf: (pdfPath) => ipcRenderer.invoke("open-pdf", pdfPath),
+  savePdf: (payload) => ipcRenderer.invoke("save-pdf", payload),
 });
 
 contextBridge.exposeInMainWorld("db", {

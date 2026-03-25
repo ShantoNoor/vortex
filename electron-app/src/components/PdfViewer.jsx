@@ -1,31 +1,41 @@
 import { PDFViewer } from "@embedpdf/react-pdf-viewer";
 import { useCallback, useRef, useState } from "react";
-import { arrayBufferToBase64 } from "../lib/utils";
+import {
+  arrayBufferToBase64,
+  base64ToArrayBuffer,
+  isGroupItem,
+} from "../lib/utils";
 import { Loader } from "./Loader";
+import { uiStore } from "../lib/store";
+import { toast } from "sonner";
 
-function isGroupItem(item) {
-  return item.type === "group";
-}
-
-export default function PdfViewer({ fileId }) {
+export default function PdfViewer({ pdfPath }) {
   const viewerRef = useRef(null);
 
+  const { setActiveFolder } = uiStore();
+
+  const [pdfName, setPdfName] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingOpacity, setLoadingOpacity] = useState("1");
 
   const openPdfFile = async () => {
-    console.log(fileId);
+    const data = await window.api.openPdf(pdfPath);
 
-    // const buffer = await file.arrayBuffer();
-
-    // const registry = await viewerRef.current?.registry;
-    // const docManager = registry.getPlugin("document-manager").provides();
-
-    // docManager.openDocumentBuffer({
-    //   buffer: buffer,
-    //   name: file.name, // Display name for the tab
-    //   autoActivate: true,
-    // });
+    if (data.success) {
+      const buffer = base64ToArrayBuffer(data.pdfBase64);
+      const registry = await viewerRef.current?.registry;
+      const docManager = registry.getPlugin("document-manager").provides();
+      docManager.openDocumentBuffer({
+        buffer: buffer,
+        name: data.pdfName,
+        autoActivate: true,
+      });
+      setPdfName(data.pdfName);
+      setLoading(false);
+    } else {
+      setActiveFolder(null, "new");
+      toast.error(`Failed to open Pdf: ${data?.error}`);
+    }
   };
 
   const handleSaveToServer = async () => {
@@ -34,9 +44,21 @@ export default function PdfViewer({ fileId }) {
 
     if (!exportPlugin) return;
 
-    const arrayBuffer = await exportPlugin.saveAsCopy().toPromise();
+    const tid = toast.loading("Saving pdf File ...");
 
-    console.log(await arrayBufferToBase64(arrayBuffer));
+    const arrayBuffer = await exportPlugin.saveAsCopy().toPromise();
+    const data = await window.api.savePdf({
+      pdfBase64: await arrayBufferToBase64(arrayBuffer),
+      pdfPath,
+      pdfName,
+    });
+
+    toast.dismiss(tid);
+    if (data.success) {
+      toast.success("Pdf saved successfully ...");
+    } else {
+      toast.error("Unable to save pdf ... " + data?.error);
+    }
   };
 
   const setupUi = useCallback(async () => {
@@ -127,7 +149,7 @@ export default function PdfViewer({ fileId }) {
         style={{ width: "100%", height: "100vh" }}
         onReady={(registry) => {
           setupUi();
-          
+          openPdfFile();
         }}
       />
       {loading && (

@@ -1,3 +1,4 @@
+import fs from "fs/promises";
 import path from "node:path";
 import cors from "cors";
 import express from "express";
@@ -22,6 +23,8 @@ import {
   relativePath,
   saveFile,
   selectFolder,
+  openPdf,
+  savePdf,
 } from "vortex-core-lib-js";
 
 const app = express();
@@ -146,6 +149,16 @@ app.post("/db-search-tag", async (req, res) => {
 app.post("/db-search-tag-activeFolder", async (req, res) => {
   const data = req.body;
   res.json(await searchTagInActiveFolder(data));
+});
+
+app.post("/open-pdf", async (req, res) => {
+  const { pdfPath } = req.body;
+  res.json(await openPdf(pdfPath));
+});
+
+app.post("/save-pdf", async (req, res) => {
+  const payload = req.body;
+  res.json(await savePdf(payload));
 });
 
 server.listen(PORT, "0.0.0.0", () => {
