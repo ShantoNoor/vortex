@@ -2,16 +2,14 @@
 
 ![cover.png](cover.png)
 
-Vortex is my personal Knowledge Management System (KMS), designed to organize ideas, documents, and workflows visually.  
-It is built around **Excalidraw**, giving me a fast, flexible, and intuitive canvas for thought.
+# Vortex is my personal Knowledge Management System (KMS), designed to organize ideas, documents, and workflows visually. It is built around **Excalidraw**, giving me a fast, flexible, and intuitive canvas for thought.
 
 ## ✨ Features
 
 - 🧩 Visual-first knowledge organization using Excalidraw
-- 🗂️ Manage folders, notes, PDFs, and sketches all in one place
+- 🗂️ Manage folders, PDFs, and Excalidraw Drawings all in one place
 - ⚡ Fast local storage — no cloud required
-- 🔍 Easy search and quick navigation
-- 🖥️ Built with Electron for a smooth desktop experience
+- 🔍 Easy search and quick navigation using Tags
 
 ## 📦 Tech Stack
 
@@ -21,16 +19,85 @@ It is built around **Excalidraw**, giving me a fast, flexible, and intuitive can
 - **Node.js / fs**
 - **ShadCN UI / Tailwind CSS**
 
-#### Fedora Linux Build Issue Solve:
+## Structure
+
+This project started as a simple Electron app, with the goal of replacing OneNote using an offline-first approach, similar to apps like Obsidian.
+
+As the project evolved, I reused the renderer (frontend) from the Electron app and turned it into a web application, where an Express server handled the backend logic.
+
+Taking it a step further, I adapted the same renderer again—this time embedding it inside an Android app using WebView. For better performance and native capabilities, I rewrote the backend logic in Kotlin with Gemini, which eventually transformed the project into a fully functional Android application.
+
+## Setup
+
+### Clone Excalidraw
+
+```bash
+git clone https://github.com/excalidraw/excalidraw
+
+cd excalidraw/
+
+yarn install
+
+yarn build:packages
+
+cd packages/common/
+yalc publish
+
+cd packages/element/
+yalc publish
+
+cd packages/excalidraw/
+yalc publish
+
+cd packages/math/
+yalc publish
+```
+
+### Clone vortex
+
+```bash
+git clone https://github.com/ShantoNoor/vortex.git
+
+cd vortex
+
+cd @core-lib-js
+yarn install
+yalc publish
+
+cd electron-app
+yalc install
+yarn install
+
+cd express-app
+yalc install
+yarn install
+```
+
+## Before runing the Android Project
+
+- Complete the electron-app setup then run
+
+```bash
+cd vortex/electron-app/
+yarn android
+```
+
+- This command will create the renderer needed for android project and place it inside the appropriate folder
+
+- Now you can run the Android Project.
+
+## Fedora Linux Build Issue Solve:
 
 > https://github.com/electron/forge/issues/3701
 
-#### Find RPM Package Name:
+### Find RPM Package Name:
 
 ```bash
 rpm -qa | grep -i "vortex"
 ```
 
-# Project Setup
+## Motivation
 
-yarn link vortex-core-lib-js @excalidraw/excalidraw @excalidraw/math @excalidraw/element @excalidraw/common
+This project, _Vortex_, began as a personal hobby with the goal of creating an alternative to OneNote. As a long-time OneNote user, I had greatly appreciated its features and usability. However, I recently encountered persistent issues with Microsoft account authentication, which motivated me to build a replacement tailored to my own needs.
+
+Vortex is built upon the foundations of several open-source technologies, and I am deeply grateful to the open-source community for making this project possible. In particular, I would like to extend special thanks to Excalidraw, without which this project would not have existed in its current form. I would also like to thank Gemini, DeepSeek, and ChatGPT for guiding me through every step of the development process.
