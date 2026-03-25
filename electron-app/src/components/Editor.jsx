@@ -732,8 +732,6 @@ export const Editor = ({ saved }) => {
 
           const transform = [1, 0, 0, 1, 0, Math.ceil(-i * chunkHeight)];
 
-          console.log("hi");
-
           await page.render({
             canvasContext: ctx,
             viewport: viewport,

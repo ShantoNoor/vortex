@@ -48,10 +48,26 @@ export function generateUUID() {
 export function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
     reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
   });
+}
+
+export function base64ToArrayBuffer(base64String) {
+    const binaryString = atob(base64String);
+    const len = binaryString.length;
+    const array = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        array[i] = binaryString.charCodeAt(i);
+    }
+    return array.buffer;
+}
+
+export function arrayBufferToBase64(buffer) {
+    const array = Uint16Array.from(new Uint8Array(buffer));
+    const binaryString = new TextDecoder("UTF-16").decode(array);
+    return btoa(binaryString);
 }
 
 export function getImageDimensions(dataURL) {

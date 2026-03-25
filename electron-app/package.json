@@ -36,6 +36,7 @@
     "vite": "^8.0.2"
   },
   "dependencies": {
+    "@embedpdf/react-pdf-viewer": "^2.10.0",
     "@excalidraw/common": "file:.yalc/@excalidraw/common",
     "@excalidraw/element": "file:.yalc/@excalidraw/element",
     "@excalidraw/excalidraw": "file:.yalc/@excalidraw/excalidraw",
