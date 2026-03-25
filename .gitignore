@@ -94,3 +94,6 @@ typings/
 out/
 dist/
 **/dist/**
+
+.yalc/
+/**/.yalc/

@@ -96,3 +96,5 @@ dist/
 
 **/*.pdf
 *.pdf
+
+.yalc/

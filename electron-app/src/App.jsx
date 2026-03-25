@@ -3,12 +3,12 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { Editor } from "./components/Editor";
 import { uiStore } from "./lib/store";
 import { AppSidebar } from "./components/AppSidebar";
 import { useEffect, useRef, useState } from "react";
 import TagSidebar from "./components/TagSidebar";
 import { Toaster } from "./components/ui/sonner";
+import Workspace from "./components/Workspace";
 
 export default function App() {
   const {
@@ -66,7 +66,7 @@ export default function App() {
           </>
         )}
         <ResizablePanel id="main" order={2} className="relative">
-          <Editor key={activeFolder} saved={saved} />
+          <Workspace saved={saved} />
         </ResizablePanel>
         {showSidebarRight && (
           <>
@@ -95,40 +95,4 @@ export default function App() {
       />
     </>
   );
-}
-
-function PdfViewerPlaceholder({ fileId }) {
-  return (
-    <div className="flex-1 h-full w-full flex flex-col items-center justify-center bg-[#111] text-white absolute inset-0">
-      <div className="text-6xl mb-4">📄</div>
-      <h2 className="text-2xl font-semibold mb-2">PDF Viewer Placeholder</h2>
-      <p className="text-neutral-400">
-        Ready to render file:{" "}
-        <span className="text-orange-400 font-mono text-sm ml-2">{fileId}</span>
-      </p>
-    </div>
-  );
-}
-
-function DocumentWorkspace({ saved }) {
-  const { activeFolder, fileTransitionIntent } = uiStore();
-  const [sessionKey, setSessionKey] = useState(() => crypto.randomUUID());
-
-  useEffect(() => {
-    // If the user clicked a file in the sidebar ('open') or clicked 'New' ('new'),
-    // we generate a new key to force a clean, fresh mount of the components.
-    // If the intent is 'save', we do NOTHING, which keeps the Editor perfectly mounted!
-    if (fileTransitionIntent === "new" || fileTransitionIntent === "open") {
-      setSessionKey(crypto.randomUUID());
-    }
-  }, [activeFolder, fileTransitionIntent]);
-
-  const isPdf = activeFolder?.toLowerCase().endsWith(".pdf");
-
-  if (isPdf) {
-    return <PdfViewerPlaceholder key={sessionKey} fileId={activeFolder} />;
-  }
-
-  // Uses sessionKey instead of activeFolder
-  return <Editor key={sessionKey} saved={saved} />;
 }
