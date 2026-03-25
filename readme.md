@@ -30,3 +30,7 @@ It is built around **Excalidraw**, giving me a fast, flexible, and intuitive can
 ```bash
 rpm -qa | grep -i "vortex"
 ```
+
+# Project Setup
+
+yarn link vortex-core-lib-js @excalidraw/excalidraw @excalidraw/math @excalidraw/element @excalidraw/common

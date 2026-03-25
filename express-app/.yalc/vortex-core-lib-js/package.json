@@ -1,0 +1,16 @@
+{
+  "name": "vortex-core-lib-js",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "vortex-core-lib-js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "keywords": [],
+  "author": "Shanto Noor",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^12.5.0"
+  },
+  "yalcSig": "540b0a8320128e38140e9da6d43d0e25"
+}

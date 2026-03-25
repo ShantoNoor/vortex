@@ -1,0 +1,9 @@
+{
+  "version": "v1",
+  "packages": {
+    "vortex-core-lib-js": {
+      "signature": "540b0a8320128e38140e9da6d43d0e25",
+      "file": true
+    }
+  }
+}

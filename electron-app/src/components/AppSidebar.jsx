@@ -40,7 +40,7 @@ export function AppSidebar({ saved }) {
         ) {
           return;
         }
-        setActiveFolder(null);
+        setActiveFolder(null, "new");
       },
     },
     {
@@ -127,7 +127,7 @@ function Tree({ item, saved }) {
             ) {
               return;
             }
-            setActiveFolder(name.path);
+            setActiveFolder(name.path, "open");
           }}
         >
           <FilePenLine />

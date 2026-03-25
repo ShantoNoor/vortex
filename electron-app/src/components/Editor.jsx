@@ -68,7 +68,7 @@ let ids = new Set([]);
 const initialData = {
   appState: {
     viewBackgroundColor: "#222",
-    currentItemStrokeColor: "#FFF",
+    currentItemStrokeColor: "#fff",
     currentItemFontSize: 36,
   },
 };
@@ -347,7 +347,7 @@ export const Editor = ({ saved }) => {
       }
 
       if (activeFolder === null) {
-        setActiveFolder(data.activeFolder);
+        setActiveFolder(data.activeFolder, "save");
         const data2 = await window.api.getFiles(savePath);
         if (data2.success && !signal.aborted) {
           setTree(data2.tree);

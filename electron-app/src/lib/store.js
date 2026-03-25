@@ -11,6 +11,8 @@ export const uiStore = create(
       activeFolder: null,
       scrollElement: null,
       sceneLoaded: false,
+      fileTransitionIntent: "open", // 'new' | 'open' | 'save',
+
       toggleSidebar: () =>
         set((state) => ({ showSidebar: !state.showSidebar })),
       toggleRightSidebar: () =>
@@ -19,9 +21,10 @@ export const uiStore = create(
       setSavePath: (path) => set(() => ({ savePath: path })),
       setTree: (tree) => set(() => ({ tree })),
       setSceneLoaded: (sceneLoaded) => set(() => ({ sceneLoaded })),
-      setActiveFolder: (fileName) =>
+      setActiveFolder: (fileName, intent = "open") =>
         set((state) => ({
           activeFolder: fileName,
+          fileTransitionIntent: intent,
           sceneLoaded: false,
         })),
       selectFolder: async () => {
