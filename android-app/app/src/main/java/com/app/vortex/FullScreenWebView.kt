@@ -39,6 +39,8 @@ import kotlinx.coroutines.withContext
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.LaunchedEffect
 import android.webkit.MimeTypeMap
+import android.webkit.WebResourceResponse
+import androidx.webkit.WebViewAssetLoader
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -157,7 +159,46 @@ fun FullScreenWebView(modifier: Modifier = Modifier, onReady: () -> Unit) {
             WebView(ctx).apply {
                 webViewRef = this
 
+                val assetLoader = WebViewAssetLoader.Builder()
+                    .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(context))
+                    .build()
+
                 webViewClient = object : WebViewClient() {
+                    override fun shouldInterceptRequest(
+                        view: WebView,
+                        request: WebResourceRequest
+                    ): WebResourceResponse? {
+                        val url = request.url.toString()
+
+                        if (url == "https://cdn.jsdelivr.net/npm/@embedpdf/pdfium@2.10.0/dist/pdfium.wasm") {
+                            return try {
+                                val inputStream = ctx.assets.open("external/pdfium.wasm")
+
+                                // Define the headers required to satisfy the CORS policy
+                                val responseHeaders = mapOf(
+                                    "Access-Control-Allow-Origin" to "*",
+                                    "Access-Control-Allow-Methods" to "GET, OPTIONS",
+                                    "Access-Control-Allow-Headers" to "*"
+                                )
+
+                                // WebResourceResponse(mimeType, encoding, statusCode, reasonPhrase, responseHeaders, data)
+                                WebResourceResponse(
+                                    "application/wasm",
+                                    null, // Encoding
+                                    200,  // Status Code
+                                    "OK", // Reason Phrase
+                                    responseHeaders,
+                                    inputStream
+                                )
+                            } catch (e: Exception) {
+                                Log.e("WebView", "Error loading local WASM: ${e.message}")
+                                null
+                            }
+                        }
+
+                        return assetLoader.shouldInterceptRequest(request.url)
+                    }
+
                     override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
                         Log.e("WebView", "Error: ${error.description} for ${request.url}")
                     }
@@ -243,6 +284,7 @@ fun FullScreenWebView(modifier: Modifier = Modifier, onReady: () -> Unit) {
 
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
+                settings.allowFileAccess = true
 
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -262,7 +304,7 @@ fun FullScreenWebView(modifier: Modifier = Modifier, onReady: () -> Unit) {
 
                 addJavascriptInterface(jsInterface, "android")
 
-                loadUrl("file:///android_asset/index.html")
+                loadUrl("https://appassets.androidplatform.net/assets/index.html")
             }
         }
     )

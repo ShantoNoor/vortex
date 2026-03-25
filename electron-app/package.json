@@ -12,9 +12,10 @@
     "publish": "VITE_ELECTRON=true electron-forge publish",
     "dev": "VITE_API_URL=/api vite dev --config vite.web.config.mjs",
     "build": "rm -rf dist && VITE_API_URL=/api VITE_WEB_BUILD=true vite build --config vite.web.config.mjs && rm -rf /home/shanto/Documents/BCS/html/dist && cp -rf dist/ /home/shanto/Documents/BCS/html/",
-    "android": "rm -rf dist && rm -f ../android-app/app/src/main/assets/index.html && VITE_ANDROID_BUILD=true vite build --config vite.android.single-file.config.mjs && cp ./dist/index.html ../android-app/app/src/main/assets/index.html",
+    "android": "rm -rf dist ../android-app/app/src/main/assets/index.html ../android-app/app/src/main/assets/assets && VITE_ANDROID_BUILD=true vite build --config vite.android.config.mjs && cp ./dist/index.html ../android-app/app/src/main/assets/index.html && cp -r ./dist/assets ../android-app/app/src/main/assets/assets",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
-    "copy-index": "cp ./dist/index.html ../android-app/app/src/main/assets/index.html"
+    "copy-index": "cp ./dist/index.html ../android-app/app/src/main/assets/index.html",
+    "postinstall": "patch-package"
   },
   "keywords": [],
   "author": {
@@ -33,6 +34,8 @@
     "@electron-forge/plugin-vite": "^7.10.2",
     "@electron/fuses": "^2.1.0",
     "electron": "41.0.3",
+    "patch-package": "^8.0.1",
+    "postinstall-postinstall": "^2.1.0",
     "vite": "^8.0.2"
   },
   "dependencies": {
@@ -53,6 +56,7 @@
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "crypto-browserify": "^3.12.1",
     "electron-squirrel-startup": "^1.0.1",
     "lucide-react": "^1.5.0",
     "next-themes": "^0.4.6",
@@ -63,10 +67,11 @@
     "react-resizable-panels": "^4",
     "socket.io-client": "^4.8.3",
     "sonner": "^2.0.7",
+    "stream-browserify": "^3.0.0",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.17",
     "tw-animate-css": "^1.4.0",
-    "vite-plugin-singlefile": "^2.3.0",
+    "vm-browserify": "^1.1.2",
     "vortex-core-lib-js": "file:.yalc/vortex-core-lib-js",
     "zod": "^4.1.13",
     "zustand": "^5.0.8"

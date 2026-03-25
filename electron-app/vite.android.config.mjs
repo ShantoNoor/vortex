@@ -2,13 +2,16 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
-import { viteSingleFile } from "vite-plugin-singlefile";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), viteSingleFile()],
+  base: "./",
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      crypto: "crypto-browserify",
+      stream: "stream-browserify",
+      vm: "vm-browserify",
     },
   },
 });

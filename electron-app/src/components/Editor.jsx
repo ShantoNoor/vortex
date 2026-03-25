@@ -68,7 +68,7 @@ let ids = new Set([]);
 const initialData = {
   appState: {
     viewBackgroundColor: "#222",
-    currentItemStrokeColor: "#fff",
+    currentItemStrokeColor: "#c2255c",
     currentItemFontSize: 36,
   },
 };

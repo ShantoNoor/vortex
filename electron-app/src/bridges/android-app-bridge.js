@@ -177,4 +177,20 @@ if (import.meta.env.VITE_ANDROID_BUILD) {
       window.android.dbGetByTag(tag, id);
     });
   };
+
+  window.api.openPdf = (pdfPath) => {
+    return new Promise((resolve, reject) => {
+      const id = window.promiseCounter++;
+      window.pendingPromises[id] = { resolve, reject };
+      window.android.openPdf(pdfPath, id);
+    });
+  };
+
+  window.api.savePdf = (payload) => {
+    return new Promise((resolve, reject) => {
+      const id = window.promiseCounter++;
+      window.pendingPromises[id] = { resolve, reject };
+      window.android.savePdf(JSON.stringify(payload), id);
+    });
+  };
 }

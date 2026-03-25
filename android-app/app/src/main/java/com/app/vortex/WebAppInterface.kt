@@ -251,4 +251,26 @@ class WebAppInterface(private val webViewRef: WebView,
             resolvePromise(callbackId, rel)
         }
     }
+
+    @JavascriptInterface
+    fun openPdf(pdfPath: String, callbackId: Int) {
+        scope.launch(Dispatchers.IO) {
+            val result = openPdfFs(pdfPath)
+            resolvePromise(callbackId, result)
+        }
+    }
+
+    @JavascriptInterface
+    fun savePdf(payloadStr: String, callbackId: Int) {
+        scope.launch(Dispatchers.IO) {
+            val payload = JSONObject(payloadStr)
+            
+            val pdfBase64 = payload.optString("pdfBase64", "")
+            val pdfPath = payload.optString("pdfPath", "")
+            val pdfName = payload.optString("pdfName", "")
+
+            val result = savePdfFs(pdfBase64, pdfPath, pdfName)
+            resolvePromise(callbackId, result)
+        }
+    }
 }

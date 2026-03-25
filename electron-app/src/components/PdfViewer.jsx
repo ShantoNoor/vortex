@@ -31,7 +31,9 @@ export default function PdfViewer({ pdfPath }) {
         autoActivate: true,
       });
       setPdfName(data.pdfName);
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 500);
     } else {
       setActiveFolder(null, "new");
       toast.error(`Failed to open Pdf: ${data?.error}`);
@@ -123,7 +125,7 @@ export default function PdfViewer({ pdfPath }) {
           },
           tabBar: "never",
           theme: {
-            preference: "system",
+            preference: "dark",
             dark: {
               accent: {
                 primary: "#e0dfff",

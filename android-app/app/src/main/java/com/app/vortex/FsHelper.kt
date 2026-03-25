@@ -3,6 +3,7 @@ package com.app.vortex
 import android.net.Uri
 import android.os.Environment
 import android.provider.DocumentsContract
+import android.util.Base64
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -189,7 +190,7 @@ fun readDirRecursive(dirPath: String): JSONArray {
                 result.put(arr)
             }
         } else {
-            if (name.endsWith(".json")) {
+            if (name.endsWith(".json") || item.name.endsWith(".pdf", ignoreCase = true)) {
                 val obj = JSONObject()
                 obj.put("name", name)
                 obj.put("path", item.absolutePath)
@@ -212,4 +213,61 @@ fun getPathFromUri(uri: Uri): String? {
         e.printStackTrace()
     }
     return null
+}
+
+fun openPdfFs(pdfPath: String): JSONObject {
+    val response = JSONObject()
+    try {
+        val file = File(pdfPath)
+        if (!file.exists()) {
+            response.put("success", false)
+            response.put("error", "PDF file not found")
+            return response
+        }
+
+        // Read bytes and encode to Base64 (NO_WRAP prevents adding newlines to the string)
+        val bytes = file.readBytes()
+        val pdfBase64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+        val pdfName = file.name
+
+        response.put("success", true)
+        response.put("pdfBase64", pdfBase64)
+        response.put("pdfName", pdfName)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        response.put("success", false)
+        response.put("error", "Failed to read PDF file: ${e.message}")
+    }
+    return response
+}
+
+fun savePdfFs(pdfBase64: String, pdfPath: String, pdfName: String): JSONObject {
+    val response = JSONObject()
+    try {
+        if (pdfBase64.isEmpty() || pdfPath.isEmpty()) {
+            response.put("success", false)
+            response.put("error", "pdfBase64 and pdfPath are required")
+            return response
+        }
+
+        val file = File(pdfPath)
+        
+        // Ensure the directory exists
+        val parentDir = file.parentFile
+        if (parentDir != null && !parentDir.exists()) {
+            parentDir.mkdirs()
+        }
+
+        // Decode from Base64 and write the file
+        val bytes = Base64.decode(pdfBase64, Base64.DEFAULT)
+        file.writeBytes(bytes)
+
+        response.put("success", true)
+        response.put("pdfName", pdfName)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        response.put("success", false)
+        response.put("error", "Failed to save PDF file: ${e.message}")
+    }
+    return response
 }
