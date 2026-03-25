@@ -3,9 +3,9 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [react(), tailwindcss()],
-  base: "/vortex/",
+  base: command === "build" ? "/vortex/" : "/",
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -26,4 +26,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

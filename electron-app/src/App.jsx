@@ -7,7 +7,6 @@ import { Editor } from "./components/Editor";
 import { uiStore } from "./lib/store";
 import { AppSidebar } from "./components/AppSidebar";
 import { useEffect, useRef, useState } from "react";
-import { Loader } from "./components/Loader";
 import TagSidebar from "./components/TagSidebar";
 import { Toaster } from "./components/ui/sonner";
 
@@ -24,14 +23,6 @@ export default function App() {
   } = uiStore();
 
   const saved = useRef(false);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-    }, 10);
-  }, [activeFolder]);
 
   useEffect(() => {
     async function run() {
@@ -53,7 +44,11 @@ export default function App() {
 
   return (
     <>
-      <title>{activeFolder || "Select Folder"}</title>
+      <title>
+        {import.meta.env.VITE_ELECTRON
+          ? activeFolder || "Select Folder"
+          : "Vortex"}
+      </title>
 
       <ResizablePanelGroup direction="horizontal" className="min-h-dvh">
         {showSidebar && (
@@ -71,7 +66,7 @@ export default function App() {
           </>
         )}
         <ResizablePanel id="main" order={2} className="relative">
-          {loading ? <Loader /> : <Editor saved={saved} />}
+          <Editor key={activeFolder} saved={saved} />
         </ResizablePanel>
         {showSidebarRight && (
           <>
