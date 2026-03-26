@@ -20,6 +20,8 @@ export default function App() {
     setActiveFolder,
     showSidebarRight,
     selectFolder,
+    toggleRightSidebar,
+    toggleSidebar,
   } = uiStore();
 
   const saved = useRef(false);
@@ -40,6 +42,18 @@ export default function App() {
       }
     }
     run();
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === "b") {
+        toggleSidebar();
+      } else if (e.key === "u") {
+        toggleRightSidebar();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, []);
 
   return (
@@ -75,7 +89,7 @@ export default function App() {
               className="bg-[#111]"
               id="sidebar-right"
               defaultSize={300}
-              minSize={300}
+              minSize={100}
               order={3}
             >
               <TagSidebar saved={saved} />

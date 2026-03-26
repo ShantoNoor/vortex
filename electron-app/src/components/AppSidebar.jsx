@@ -2,8 +2,10 @@ import {
   ChevronRight,
   FilePenLine,
   FilePlus,
+  FileText,
   FolderPen,
   Notebook,
+  PanelRight,
 } from "lucide-react";
 import {
   Collapsible,
@@ -27,8 +29,14 @@ import {
 import { uiStore } from "../lib/store";
 
 export function AppSidebar({ saved }) {
-  const { selectFolder, tree, savePath, setActiveFolder, activeFolder } =
-    uiStore();
+  const {
+    selectFolder,
+    tree,
+    savePath,
+    setActiveFolder,
+    activeFolder,
+    toggleRightSidebar,
+  } = uiStore();
   const actions = [
     {
       name: "New",
@@ -42,6 +50,7 @@ export function AppSidebar({ saved }) {
         }
         setActiveFolder(null, "new");
       },
+      show: import.meta.env.VITE_API_URL === null,
     },
     {
       name: "Open Folder",
@@ -55,6 +64,13 @@ export function AppSidebar({ saved }) {
         }
         selectFolder();
       },
+      show: import.meta.env.VITE_API_URL === null,
+    },
+    {
+      name: "Toggle Right Sidebar",
+      icon: <PanelRight />,
+      onClick: toggleRightSidebar,
+      show: true,
     },
   ];
 
@@ -62,12 +78,13 @@ export function AppSidebar({ saved }) {
     <>
       <SidebarProvider>
         <SidebarContent className="overflow-x-hidden h-dvh no-scrollbar">
-          {!import.meta.env.VITE_API_URL && (
-            <SidebarGroup>
-              <SidebarGroupLabel>Actions</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu className="min-w-screen">
-                  {actions.map((item, index) => (
+          <SidebarGroup>
+            <SidebarGroupLabel>Actions</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="min-w-screen">
+                {actions
+                  .filter((item) => item.show)
+                  .map((item, index) => (
                     <SidebarMenuItem key={index} onClick={item.onClick}>
                       <SidebarMenuButton>
                         {item.icon}
@@ -75,10 +92,10 @@ export function AppSidebar({ saved }) {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
           <SidebarGroup>
             <SidebarGroupLabel>{savePath || ""}</SidebarGroupLabel>
             <SidebarGroupLabel className="text-orange-400">
@@ -130,7 +147,11 @@ function Tree({ item, saved }) {
             setActiveFolder(name.path, "open");
           }}
         >
-          <FilePenLine />
+          {name.name.toLowerCase().endsWith(".pdf") ? (
+            <FileText />
+          ) : (
+            <FilePenLine />
+          )}
           {name.name}
         </SidebarMenuButton>
       </SidebarMenuItem>

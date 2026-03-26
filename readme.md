@@ -30,14 +30,19 @@ Taking it a step further, I adapted the same renderer again—this time embeddin
 ## Setup
 
 ```bash
-git clone https://github.com/excalidraw/excalidraw
+# first install yarn and yalc
+sudo npm i -g yarn yalc
+```
+
+```bash
+git clone https://github.com/excalidraw/excalidraw.git
 
 git clone https://github.com/ShantoNoor/vortex.git
 
-yarn --cwd ./vortex/electron-app install
+yarn --cwd ./vortex/electron-app/ install
 
 # this will run the electron-app
-yarn --cwd ./vortex/electron-app start
+yarn --cwd ./vortex/electron-app/ start
 ```
 
 ## Before runing the Android Project

@@ -11,7 +11,7 @@ import "@excalidraw/excalidraw/index.css";
 import {
   ArrowDown,
   ArrowLeft,
-  ArrowLeftToLine,
+  Save,
   ArrowRight,
   ChevronsDown,
   ChevronsRight,
@@ -800,7 +800,6 @@ export const Editor = ({ saved }) => {
     }
   };
 
-  // Want to Revome : TODO
   useEffect(() => {
     const handler = (e) => {
       const isTyping =
@@ -823,14 +822,8 @@ export const Editor = ({ saved }) => {
           toggleLockAllElements(true);
         } else if (e.key === "]") {
           toggleLockAllElements(false);
-        } else if (e.key === "b") {
-          toggleSidebar();
-        } else if (e.key === "u") {
-          toggleRightSidebar();
         } else if (e.key === "j") {
           openTagWindow();
-        } else if (e.key === "s") {
-          saveFile();
         } else if (e.key === "n") {
           autoSet("down");
         } else if (e.key === "m") {
@@ -865,17 +858,13 @@ export const Editor = ({ saved }) => {
               variant="outline"
               onClick={saveFile}
             >
-              <ArrowLeftToLine size={4} />
+              <Save size={4} />
             </Button>
           );
         }}
       >
         <MainMenu>
-          <MainMenu.Item
-            icon={<ArrowLeftToLine strokeWidth={1.5} />}
-            onSelect={saveFile}
-            shortcut="s"
-          >
+          <MainMenu.Item icon={<Save strokeWidth={1.5} />} onSelect={saveFile}>
             Save
           </MainMenu.Item>
           <MainMenu.Item
@@ -980,6 +969,13 @@ export const Editor = ({ saved }) => {
                 shortcut="b"
               >
                 Toggle Sidebar
+              </WelcomeScreen.Center.MenuItem>
+              <WelcomeScreen.Center.MenuItem
+                icon={<PanelRight strokeWidth={1.5} className="size-4" />}
+                onSelect={toggleRightSidebar}
+                shortcut="u"
+              >
+                Toggle Right Sidebar
               </WelcomeScreen.Center.MenuItem>
               <WelcomeScreen.Center.MenuItem
                 icon={<Images className="size-4" strokeWidth={1.5} />}

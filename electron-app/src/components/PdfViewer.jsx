@@ -1,5 +1,5 @@
 import { PDFViewer } from "@embedpdf/react-pdf-viewer";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   arrayBufferToBase64,
   base64ToArrayBuffer,
@@ -8,11 +8,25 @@ import {
 import { Loader } from "./Loader";
 import { uiStore } from "../lib/store";
 import { toast } from "sonner";
+import {
+  Hand,
+  Highlighter,
+  MousePointer2,
+  PanelRight,
+  Pen,
+  PencilLine,
+  Sidebar,
+  Square,
+} from "lucide-react";
 
-export default function PdfViewer({ pdfPath }) {
+export default function PdfViewer({ pdfPath, saved }) {
   const viewerRef = useRef(null);
+  const [docId, setDocId] = useState(null);
 
-  const { setActiveFolder } = uiStore();
+  const { setActiveFolder, toggleSidebar, toggleRightSidebar } = uiStore();
+
+  const [isPanMode, setIsPanMode] = useState(false);
+  const [activeTool, setActiveTool] = useState(null);
 
   const [pdfName, setPdfName] = useState("");
   const [loading, setLoading] = useState(true);
@@ -31,6 +45,8 @@ export default function PdfViewer({ pdfPath }) {
         autoActivate: true,
       });
       setPdfName(data.pdfName);
+      saved.current = true;
+
       setTimeout(() => {
         setLoading(false);
       }, 500);
@@ -58,6 +74,7 @@ export default function PdfViewer({ pdfPath }) {
     toast.dismiss(tid);
     if (data.success) {
       toast.success("Pdf saved successfully ...");
+      saved.current = true;
     } else {
       toast.error("Unable to save pdf ... " + data?.error);
     }
@@ -81,19 +98,40 @@ export default function PdfViewer({ pdfPath }) {
       action: handleSaveToServer,
     });
 
+    commands.registerCommand({
+      id: "right.side.bar",
+      label: "Show Sidebar",
+      icon: "sidebar",
+      action: toggleSidebar,
+    });
+
     const currentSchema = ui.getSchema();
     const mainToolbar = currentSchema.toolbars["main-toolbar"];
 
     if (mainToolbar) {
-      // Clone items with proper typing using structuredClone
       const items = structuredClone(mainToolbar.items);
 
-      // Find the right-group using type guard
+      const leftGroup = items.find(
+        (item) => isGroupItem(item) && item.id === "left-group",
+      );
+
+      if (leftGroup) {
+        const [, , ...rest] = leftGroup.items;
+        leftGroup.items = rest;
+        console.log(leftGroup.items);
+      }
+
       const rightGroup = items.find(
         (item) => isGroupItem(item) && item.id === "right-group",
       );
 
       if (rightGroup) {
+        rightGroup.items.pop();
+        rightGroup.items.push({
+          type: "divider",
+          id: "divider-save",
+          orientation: "vertical",
+        });
         rightGroup.items.push({
           type: "command-button",
           id: "custom-save",
@@ -112,6 +150,67 @@ export default function PdfViewer({ pdfPath }) {
       });
     }
   }, []);
+
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+    let cleanupTool;
+    let cleanupEvents;
+    let cleanup;
+
+    const setupListeners = async () => {
+      const registry = await viewer.registry;
+
+      const documentManager = registry
+        .getPlugin("document-manager")
+        ?.provides();
+      const document = documentManager?.getActiveDocument();
+      if (document) {
+        setDocId(document.id);
+
+        const panPlugin = registry?.getPlugin("pan")?.provides();
+        const docPan = panPlugin?.forDocument(document.id);
+
+        if (docPan) {
+          setIsPanMode(docPan.isPanMode());
+          cleanup = docPan.onPanModeChange((isActive) => {
+            setIsPanMode(isActive);
+          });
+        }
+      }
+
+      const annotationPlugin = registry?.getPlugin("annotation")?.provides();
+      if (annotationPlugin) {
+        cleanupTool = annotationPlugin.onActiveToolChange(({ tool }) => {
+          console.log(tool);
+          setActiveTool(tool?.id || null);
+        });
+
+        cleanupEvents = annotationPlugin.onAnnotationEvent((event) => {
+          if (!loading) saved.current = false;
+        });
+      }
+    };
+    setupListeners();
+    if (import.meta.env.VITE_ANDROID_BUILD) togglePanMode();
+    return () => {
+      cleanup?.();
+      cleanupTool?.();
+      cleanupEvents?.();
+    };
+  }, [loading]);
+
+  const togglePanMode = async () => {
+    const registry = await viewerRef.current?.registry;
+    const panPlugin = registry?.getPlugin("pan")?.provides();
+    panPlugin?.forDocument(docId).togglePan();
+  };
+
+  const setTool = async (toolId) => {
+    const registry = await viewerRef.current?.registry;
+    const annotationPlugin = registry?.getPlugin("annotation")?.provides();
+    annotationPlugin?.setActiveTool(toolId);
+  };
 
   return (
     <div className="relative">
@@ -154,6 +253,72 @@ export default function PdfViewer({ pdfPath }) {
           openPdfFile();
         }}
       />
+
+      <div className="absolute bottom-6 right-3 md:right-10 z-10 rounded-lg border border-gray-200 bg-gray-50 p-2 dark:border-[#222] dark:bg-[#111]">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-1">
+              <div
+                onClick={togglePanMode}
+                className={`rounded p-2 transition-colors ${
+                  isPanMode
+                    ? "bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-[#e0dfff]"
+                    : "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
+                }`}
+                title="Pan"
+              >
+                <Hand size={18} />
+              </div>
+              <div
+                onClick={() => setTool("highlight")}
+                className={`rounded p-2 transition-colors ${
+                  activeTool === "highlight"
+                    ? "bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-[#e0dfff]"
+                    : "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
+                }`}
+                title="Highlighter"
+              >
+                <Highlighter size={18} />
+              </div>
+              <div
+                onClick={() => setTool("inkHighlighter")}
+                className={`rounded p-2 transition-colors ${
+                  activeTool === "inkHighlighter"
+                    ? "bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-[#e0dfff]"
+                    : "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
+                }`}
+                title="Pen (Ink Highlighter)"
+              >
+                <PencilLine size={18} />
+              </div>
+              <div
+                onClick={toggleRightSidebar}
+                className={`rounded p-2 transition-colors text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700`}
+                title="Open Right Sidebar"
+              >
+                <PanelRight size={18} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="absolute bottom-6 left-3 md:left-10 z-10 rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-[#222] dark:bg-[#111]">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1">
+              <div
+                onClick={toggleSidebar}
+                className={`rounded p-2 transition-colors text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700`}
+                title="Open Sidebar"
+              >
+                <Sidebar size={18} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {loading && (
         <div className="absolute inset-0 z-10">
           <Loader opacity={loadingOpacity} />
