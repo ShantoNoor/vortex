@@ -11,12 +11,9 @@ import { toast } from "sonner";
 import {
   Hand,
   Highlighter,
-  MousePointer2,
   PanelRight,
-  Pen,
   PencilLine,
   Sidebar,
-  Square,
 } from "lucide-react";
 
 export default function PdfViewer({ pdfPath, saved }) {
@@ -118,7 +115,6 @@ export default function PdfViewer({ pdfPath, saved }) {
       if (leftGroup) {
         const [, , ...rest] = leftGroup.items;
         leftGroup.items = rest;
-        console.log(leftGroup.items);
       }
 
       const rightGroup = items.find(
@@ -182,7 +178,6 @@ export default function PdfViewer({ pdfPath, saved }) {
       const annotationPlugin = registry?.getPlugin("annotation")?.provides();
       if (annotationPlugin) {
         cleanupTool = annotationPlugin.onActiveToolChange(({ tool }) => {
-          console.log(tool);
           setActiveTool(tool?.id || null);
         });
 

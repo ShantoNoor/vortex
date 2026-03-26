@@ -2,7 +2,7 @@
   "version": "v1",
   "packages": {
     "@excalidraw/excalidraw": {
-      "signature": "83cee451fac0367526eaa8a288d06919",
+      "signature": "335a08efd6b7b670088795d6e8b11000",
       "file": true
     },
     "@excalidraw/common": {

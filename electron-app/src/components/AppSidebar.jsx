@@ -50,7 +50,7 @@ export function AppSidebar({ saved }) {
         }
         setActiveFolder(null, "new");
       },
-      show: import.meta.env.VITE_API_URL === null,
+      show: import.meta.env.VITE_API_URL ? false : true,
     },
     {
       name: "Open Folder",
@@ -64,7 +64,7 @@ export function AppSidebar({ saved }) {
         }
         selectFolder();
       },
-      show: import.meta.env.VITE_API_URL === null,
+      show: import.meta.env.VITE_API_URL ? false : true,
     },
     {
       name: "Toggle Right Sidebar",
