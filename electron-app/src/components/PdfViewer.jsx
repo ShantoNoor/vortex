@@ -1,4 +1,4 @@
-import { PDFViewer } from "@embedpdf/react-pdf-viewer";
+import { PDFViewer, ZoomMode } from "@embedpdf/react-pdf-viewer";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   arrayBufferToBase64,
@@ -223,6 +223,9 @@ export default function PdfViewer({ pdfPath, saved }) {
             maxDocuments: 1,
           },
           tabBar: "never",
+          zoom: {
+            defaultZoomLevel: ZoomMode.FitWidth,
+          },
           theme: {
             preference: "dark",
             dark: {

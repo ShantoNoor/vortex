@@ -45,7 +45,7 @@ const PORT = 55000;
 const home = os.homedir();
 const folderPath = process.env.DEV
   ? path.join(home, "Downloads/test/")
-  : path.join(home, "Documents/notes/");
+  : path.join(home, "notes/");
 
 initDB(path.join(folderPath, `${path.basename(folderPath)}.db`));
 
