@@ -2,19 +2,19 @@
   "version": "v1",
   "packages": {
     "@excalidraw/excalidraw": {
-      "signature": "6274b42e9ad63e0280f427961ffc91b4",
+      "signature": "83cee451fac0367526eaa8a288d06919",
       "file": true
     },
     "@excalidraw/common": {
-      "signature": "5cba030d8cf590c1362e6ff162716321",
+      "signature": "ab075a1e7f9e5b215d4b03dece8cf1d4",
       "file": true
     },
     "@excalidraw/math": {
-      "signature": "498d6733e4fca5dee0625195cdd975b6",
+      "signature": "ad0373c299d813822ff699ef959ea590",
       "file": true
     },
     "@excalidraw/element": {
-      "signature": "55facf76e05da848a7dcffb8352fc5a0",
+      "signature": "889010907939cd805b6b8905dca161f9",
       "file": true
     },
     "vortex-core-lib-js": {

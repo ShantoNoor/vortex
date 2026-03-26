@@ -98,3 +98,4 @@ dist/
 *.pdf
 
 .yalc/
+.env.web

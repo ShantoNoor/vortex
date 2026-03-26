@@ -29,53 +29,20 @@ Taking it a step further, I adapted the same renderer again—this time embeddin
 
 ## Setup
 
-### Clone Excalidraw
-
 ```bash
 git clone https://github.com/excalidraw/excalidraw
 
-cd excalidraw/
-
-yarn install
-
-yarn build:packages
-
-cd packages/common/
-yalc publish
-
-cd packages/element/
-yalc publish
-
-cd packages/excalidraw/
-yalc publish
-
-cd packages/math/
-yalc publish
-```
-
-### Clone vortex
-
-```bash
 git clone https://github.com/ShantoNoor/vortex.git
 
-cd vortex
+yarn --cwd ./vortex/electron-app install
 
-cd @core-lib-js
-yarn install
-yalc publish
-
-cd electron-app
-yalc install
-yarn install
-
-cd express-app
-yalc install
-yarn install
+# this will run the electron-app
+yarn --cwd ./vortex/electron-app start
 ```
 
 ## Before runing the Android Project
 
-- Complete the electron-app setup then run
+- Complete the setup then run
 
 ```bash
 cd vortex/electron-app/
