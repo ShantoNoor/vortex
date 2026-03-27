@@ -2,6 +2,7 @@ package com.app.vortex
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.content.Intent
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
@@ -164,6 +165,34 @@ fun FullScreenWebView(modifier: Modifier = Modifier, onReady: () -> Unit) {
                     .build()
 
                 webViewClient = object : WebViewClient() {
+                    // Overridden method to catch link clicks
+                    override fun shouldOverrideUrlLoading(
+                        view: WebView?,
+                        request: WebResourceRequest?
+                    ): Boolean {
+                        val url = request?.url?.toString() ?: return false
+
+                        // Check if the link is a standard web URL
+                        if (url.startsWith("http://") || url.startsWith("https://")) {
+                            return try {
+                                // Create an intent to view the URL in an external browser
+                                val intent = Intent(Intent.ACTION_VIEW, request.url)
+
+                                // Start the browser activity using the compose context
+                                context.startActivity(intent)
+
+                                // Return true to tell the WebView that we have handled the click
+                                true
+                            } catch (e: Exception) {
+                                Log.e("WebView", "No application can handle this request: ${e.message}")
+                                false
+                            }
+                        }
+
+                        // Return false for local assets or internal routing so the WebView handles them normally
+                        return false
+                    }
+
                     override fun shouldInterceptRequest(
                         view: WebView,
                         request: WebResourceRequest
