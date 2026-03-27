@@ -199,7 +199,7 @@ fun FullScreenWebView(modifier: Modifier = Modifier, onReady: () -> Unit) {
                     ): WebResourceResponse? {
                         val url = request.url.toString()
 
-                        if (url == "https://cdn.jsdelivr.net/npm/@embedpdf/pdfium@2.10.0/dist/pdfium.wasm") {
+                        if (url == "https://cdn.jsdelivr.net/npm/@embedpdf/pdfium@2.10.1/dist/pdfium.wasm") {
                             return try {
                                 val inputStream = ctx.assets.open("external/pdfium.wasm")
 

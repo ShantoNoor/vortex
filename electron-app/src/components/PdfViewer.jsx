@@ -216,6 +216,9 @@ export default function PdfViewer({ pdfPath }) {
         ref={viewerRef}
         config={{
           disabledCategories: ["document", "form"],
+          annotation: {
+            selectAfterCreate: false, 
+          },
           documentManager: {
             initialDocuments: [],
             maxDocuments: 1,
