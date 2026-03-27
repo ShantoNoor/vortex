@@ -9,6 +9,18 @@ import { useEffect, useRef, useState } from "react";
 import TagSidebar from "./components/TagSidebar";
 import { Toaster } from "./components/ui/sonner";
 import Workspace from "./components/Workspace";
+import { useDefaultLayout } from "react-resizable-panels";
+
+function getLayoutIds(showSidebar, showSidebarRight) {
+  if (showSidebar && showSidebarRight) {
+    return ["sidebar", "main", "sidebar-right"];
+  } else if (showSidebar) {
+    return ["sidebar", "main"];
+  } else if (showSidebarRight) {
+    return ["main", "sidebar-right"];
+  }
+  return ["main"];
+}
 
 export default function App() {
   const {
@@ -25,24 +37,18 @@ export default function App() {
     addToRecents,
   } = uiStore();
 
+  const { defaultLayout, onLayoutChanged } = useDefaultLayout({
+    id: "vortex-layout-id",
+    storage: localStorage,
+    panelIds: getLayoutIds(showSidebar, showSidebarRight),
+  });
+
   useEffect(() => {
     async function run() {
       if (savePath !== null) {
         const data = await window.api.getFiles(savePath);
         if (data.success) {
           setTree(data.tree);
-
-          // adding the auto-opening file to recents
-          const activeFolderSplitArray = activeFolder.split("/");
-          const activeFolderBaseName =
-            activeFolder.split("/")[activeFolderSplitArray.length - 1];
-          const activeFolderIsPdf = activeFolder.toLowerCase().endsWith(".pdf");
-
-          addToRecents({
-            name: activeFolderBaseName,
-            path: activeFolder,
-            isPdf: activeFolderIsPdf,
-          });
         } else {
           alert(`Failed to Open: ${savePath} try to open a valid folder`);
           setSavePath(null);
@@ -50,6 +56,20 @@ export default function App() {
         }
       } else if (import.meta.env.VITE_API_URL) {
         await selectFolder();
+      }
+
+      if (activeFolder) {
+        // adding the auto-opening file to recents
+        const activeFolderSplitArray = activeFolder.split("/");
+        const activeFolderBaseName =
+          activeFolder.split("/")[activeFolderSplitArray.length - 1];
+        const activeFolderIsPdf = activeFolder.toLowerCase().endsWith(".pdf");
+
+        addToRecents({
+          name: activeFolderBaseName,
+          path: activeFolder,
+          isPdf: activeFolderIsPdf,
+        });
       }
     }
     run();
@@ -75,7 +95,12 @@ export default function App() {
           : "Vortex"}
       </title>
 
-      <ResizablePanelGroup direction="horizontal" className="min-h-dvh">
+      <ResizablePanelGroup
+        defaultLayout={defaultLayout}
+        onLayoutChanged={onLayoutChanged}
+        direction="horizontal"
+        className="min-h-dvh"
+      >
         {showSidebar && (
           <>
             <ResizablePanel
@@ -83,6 +108,7 @@ export default function App() {
               id="sidebar"
               defaultSize={200}
               minSize={10}
+              groupResizeBehavior="preserve-pixel-size"
             >
               <AppSidebar />
             </ResizablePanel>
@@ -106,6 +132,7 @@ export default function App() {
               id="sidebar-right"
               defaultSize={300}
               minSize={100}
+              groupResizeBehavior="preserve-pixel-size"
             >
               <TagSidebar />
             </ResizablePanel>
