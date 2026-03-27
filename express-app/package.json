@@ -21,9 +21,5 @@
     "express": "^5.2.1",
     "socket.io": "^4.8.3",
     "vortex-core-lib-js": "file:.yalc/vortex-core-lib-js"
-  },
-  "devDependencies": {
-    "dotenv-cli": "^11.0.0",
-    "env-cmd": "^11.0.0"
   }
 }

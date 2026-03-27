@@ -368,7 +368,7 @@ export const Editor = () => {
 
       if (!signal.aborted) {
         toast.dismiss(tid);
-        toast.success("Save Successfull!..");
+        toast.success("Saved!");
         setSaved(true);
       }
       return;
