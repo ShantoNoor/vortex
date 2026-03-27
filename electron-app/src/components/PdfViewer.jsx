@@ -16,11 +16,12 @@ import {
   Sidebar,
 } from "lucide-react";
 
-export default function PdfViewer({ pdfPath, saved }) {
+export default function PdfViewer({ pdfPath }) {
   const viewerRef = useRef(null);
   const [docId, setDocId] = useState(null);
 
-  const { setActiveFolder, toggleSidebar, toggleRightSidebar } = uiStore();
+  const { setActiveFolder, toggleSidebar, toggleRightSidebar, setSaved } =
+    uiStore();
 
   const [isPanMode, setIsPanMode] = useState(false);
   const [activeTool, setActiveTool] = useState(null);
@@ -42,7 +43,7 @@ export default function PdfViewer({ pdfPath, saved }) {
         autoActivate: true,
       });
       setPdfName(data.pdfName);
-      saved.current = true;
+      setSaved(true);
 
       setTimeout(() => {
         setLoading(false);
@@ -71,7 +72,7 @@ export default function PdfViewer({ pdfPath, saved }) {
     toast.dismiss(tid);
     if (data.success) {
       toast.success("Pdf saved successfully ...");
-      saved.current = true;
+      setSaved(true);
     } else {
       toast.error("Unable to save pdf ... " + data?.error);
     }
@@ -182,7 +183,9 @@ export default function PdfViewer({ pdfPath, saved }) {
         });
 
         cleanupEvents = annotationPlugin.onAnnotationEvent((event) => {
-          if (!loading) saved.current = false;
+          if (!loading) {
+            setSaved(false);
+          }
         });
       }
     };

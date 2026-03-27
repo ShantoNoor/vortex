@@ -12,6 +12,7 @@ export const uiStore = create(
       scrollElement: null,
       sceneLoaded: false,
       fileTransitionIntent: "open", // 'new' | 'open' | 'save',
+      saved: false,
 
       toggleSidebar: () =>
         set((state) => ({ showSidebar: !state.showSidebar })),
@@ -38,6 +39,7 @@ export const uiStore = create(
         }
       },
       setScrollElement: (scrollElement) => set(() => ({ scrollElement })),
+      setSaved: (saved) => set(() => ({ saved })),
     }),
     {
       name: "vortex-ui-states",

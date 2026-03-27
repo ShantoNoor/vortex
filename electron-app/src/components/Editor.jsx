@@ -73,7 +73,7 @@ const initialData = {
   },
 };
 
-export const Editor = ({ saved }) => {
+export const Editor = () => {
   const imagesOpenRef = useRef(null);
   const abortControllersRef = useRef({});
 
@@ -96,6 +96,8 @@ export const Editor = ({ saved }) => {
     setScrollElement,
     sceneLoaded,
     setSceneLoaded,
+    saved,
+    setSaved,
   } = uiStore();
 
   const getAbortSignal = useCallback((operationName) => {
@@ -260,7 +262,10 @@ export const Editor = ({ saved }) => {
       }
     }
 
-    saved.current = true;
+    setTimeout(() => {
+      setSaved(true);
+      console.log("saved");
+    }, 500);
     setLoading(false);
     setSceneLoaded(true);
   };
@@ -367,7 +372,7 @@ export const Editor = ({ saved }) => {
       if (!signal.aborted) {
         toast.dismiss(tid);
         toast.success("Save Successfull!..");
-        saved.current = true;
+        setSaved(true);
       }
       return;
     }
@@ -845,9 +850,9 @@ export const Editor = ({ saved }) => {
           });
         }}
         initialData={initialData}
-        onChange={() => {
-          if (saved.current) {
-            saved.current = false;
+        onPointerUp={(_, __) => {
+          if (saved) {
+            setSaved(false);
           }
         }}
         validateEmbeddable={(link) => false}

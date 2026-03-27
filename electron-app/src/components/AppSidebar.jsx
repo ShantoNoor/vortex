@@ -1,34 +1,24 @@
 import {
-  ChevronRight,
   FilePenLine,
   FilePlus,
   FileText,
   FolderPen,
-  Notebook,
   PanelRight,
 } from "lucide-react";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuBadge,
-  SidebarProvider,
-} from "@/components/ui/sidebar";
+  TreeExpander,
+  TreeIcon,
+  TreeLabel,
+  TreeNode,
+  TreeNodeContent,
+  TreeNodeTrigger,
+  TreeProvider,
+  TreeView,
+} from "@/components/kibo-ui/tree";
 
 import { uiStore } from "../lib/store";
 
-export function AppSidebar({ saved }) {
+export function AppSidebar() {
   const {
     selectFolder,
     tree,
@@ -36,11 +26,13 @@ export function AppSidebar({ saved }) {
     setActiveFolder,
     activeFolder,
     toggleRightSidebar,
+    saved,
   } = uiStore();
+
   const actions = [
     {
       name: "New",
-      icon: <FilePlus />,
+      icon: <FilePlus className="min-w-4 min-h-4 " />,
       onClick: () => {
         if (
           !activeFolder &&
@@ -54,7 +46,7 @@ export function AppSidebar({ saved }) {
     },
     {
       name: "Open Folder",
-      icon: <FolderPen />,
+      icon: <FolderPen className="min-w-4 min-h-4" />,
       onClick: () => {
         if (
           !activeFolder &&
@@ -68,76 +60,63 @@ export function AppSidebar({ saved }) {
     },
     {
       name: "Toggle Right Sidebar",
-      icon: <PanelRight />,
+      icon: <PanelRight className="w-4 h-4" />,
       onClick: toggleRightSidebar,
       show: true,
     },
   ];
 
   return (
-    <>
-      <SidebarProvider>
-        <Sidebar collapsible="none" className="w-full h-dvh">
-          <SidebarContent className="no-scrollbar">
-            <SidebarGroup>
-              <SidebarGroupLabel>Actions</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu className="">
-                  {actions
-                    .filter((item) => item.show)
-                    .map((item, index) => (
-                      <SidebarMenuItem key={index} onClick={item.onClick}>
-                        <SidebarMenuButton className="truncate">
-                          {item.icon}
-                          {item.name}
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            <SidebarGroup className="">
-              <SidebarGroupLabel className="truncate">
-                {savePath || ""}
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu className="">
-                  {tree?.map((item, index) => (
-                    <Tree key={index} item={item} saved={saved} />
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
-      </SidebarProvider>
-    </>
+    <aside className="h-dvh flex flex-col bg-background border-r">
+      <div className="flex-1 overflow-y-auto no-scrollbar">
+        {tree && tree.length > 0 && (
+          <TreeProvider
+            defaultExpandedIds={activeFolder?.replace(savePath, "")?.split("/")}
+            selectedIds={[activeFolder]}
+            onSelectionChange={(ids) => {}}
+          >
+            <TreeView className="p-0">
+              {tree.map((item, index) => (
+                <KiboTree
+                  key={index}
+                  item={item}
+                  level={0}
+                  isLast={index === tree.length - 1}
+                />
+              ))}
+            </TreeView>
+          </TreeProvider>
+        )}
+      </div>
+    </aside>
   );
 }
 
-function Tree({ item, saved }) {
+function KiboTree({ item, level = 1, isLast }) {
   const [name, ...items] = Array.isArray(item) ? item : [item];
-  const { setActiveFolder, activeFolder } = uiStore();
+  const { setActiveFolder, activeFolder, saved } = uiStore();
 
+  // Handle leaf nodes (Files and targeted folders returning { name, path })
   if (typeof name !== "string") {
+    const isPdf = name.name.toLowerCase().endsWith(".pdf");
+    const Icon = isPdf ? FileText : FilePenLine;
+    const isActive = name.path === activeFolder;
+
     return (
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          isActive={name.path === activeFolder}
-          className="truncate data-[active=true]:bg-accent data-[active=true]:text-orange-400 data-[active=true]:hover:text-orange-400 w-full"
+      <TreeNode level={level} nodeId={name.path} isLast={isLast}>
+        <TreeNodeTrigger
+          className="group"
           onClick={() => {
-            if (name.path === activeFolder) return;
+            if (isActive) return;
             if (
               !activeFolder &&
               !confirm("Sure then Ok else Cancel and Save! ...")
             ) {
               return;
             }
-
             if (
               activeFolder &&
-              !saved.current &&
+              !saved &&
               !confirm("Sure then Ok else Cancel and Save! ...")
             ) {
               return;
@@ -145,46 +124,42 @@ function Tree({ item, saved }) {
             setActiveFolder(name.path, "open");
           }}
         >
-          {name.name.toLowerCase().endsWith(".pdf") ? (
-            <FileText />
-          ) : (
-            <FilePenLine />
+          <TreeExpander />
+          <TreeIcon
+            icon={<Icon className={`h-4 w-4 ${isActive ? "" : ""}`} />}
+          />
+          <TreeLabel className={`truncate ${isActive ? "font-medium" : ""}`}>
+            {name.name}
+          </TreeLabel>
+
+          {isActive && !saved && (
+            <span className="ml-auto text-[10px] font-medium flex items-center justify-center h-4 w-4">
+              M
+            </span>
           )}
-          {name.name}
-        </SidebarMenuButton>
-        {name.path === activeFolder && (
-          <SidebarMenuBadge className="hover:bg-red-500 border border-red-50">
-            A
-          </SidebarMenuBadge>
-        )}
-      </SidebarMenuItem>
+        </TreeNodeTrigger>
+      </TreeNode>
     );
   }
 
+  // Handle directory nodes (returning [folderName, ...children])
   return (
-    <SidebarMenuItem>
-      <Collapsible
-        className="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
-        defaultOpen={activeFolder?.includes(name)}
-      >
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton
-            isActive={activeFolder?.includes(name)}
-            className="truncate data-[active=true]:text-orange-400 data-[active=true]:hover:text-orange-400! data-[active=true]:bg-transparent! data-[active=true]:hover:bg-accent!"
-          >
-            <ChevronRight className="transition-transform" />
-            <Notebook />
-            {name}
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            {items.map((subItem, index) => (
-              <Tree key={index} item={subItem} saved={saved} />
-            ))}
-          </SidebarMenuSub>
-        </CollapsibleContent>
-      </Collapsible>
-    </SidebarMenuItem>
+    <TreeNode level={level} nodeId={name} isLast={isLast}>
+      <TreeNodeTrigger>
+        <TreeExpander hasChildren />
+        <TreeIcon hasChildren />
+        <TreeLabel className="truncate">{name}</TreeLabel>
+      </TreeNodeTrigger>
+      <TreeNodeContent hasChildren>
+        {items.map((subItem, index) => (
+          <KiboTree
+            key={index}
+            item={subItem}
+            level={level + 1}
+            isLast={index === items.length - 1}
+          />
+        ))}
+      </TreeNodeContent>
+    </TreeNode>
   );
 }

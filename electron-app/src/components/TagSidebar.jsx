@@ -4,7 +4,7 @@ import { Input } from "./ui/input";
 import { FilePenLine, Link, X } from "lucide-react";
 import { CopyButton } from "./CopyButton";
 
-const TagSidebar = ({ saved }) => {
+const TagSidebar = () => {
   const [tags, setTags] = useState([]);
   const [tagsFiltered, setTagsFiltered] = useState([]);
   const [search, setSearch] = useState("");
@@ -14,6 +14,7 @@ const TagSidebar = ({ saved }) => {
     setScrollElement,
     savePath,
     toggleRightSidebar,
+    saved,
   } = uiStore();
   const [relativeActiveFolder, setRelativeActiveFolder] =
     useState(activeFolder);
@@ -120,7 +121,7 @@ const TagSidebar = ({ saved }) => {
 
               if (
                 activeFolder &&
-                !saved.current &&
+                !saved &&
                 !confirm("Sure then Ok else Cancel and Save! ...")
               ) {
                 return;

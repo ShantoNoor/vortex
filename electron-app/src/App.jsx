@@ -24,8 +24,6 @@ export default function App() {
     toggleSidebar,
   } = uiStore();
 
-  const saved = useRef(false);
-
   useEffect(() => {
     async function run() {
       if (savePath !== null) {
@@ -71,20 +69,26 @@ export default function App() {
               className="bg-[#111]"
               id="sidebar"
               defaultSize={200}
-              minSize={100}
+              minSize={10}
               order={1}
             >
-              <AppSidebar saved={saved} />
+              <AppSidebar />
             </ResizablePanel>
-            <ResizableHandle withHandle className="w-0.5 bg-[#333] focus-visible:ring-offset-0 focus-visible:ring-0" />
+            <ResizableHandle
+              withHandle
+              className="w-0.5 bg-[#333] focus-visible:ring-offset-0 focus-visible:ring-0"
+            />
           </>
         )}
         <ResizablePanel id="main" order={2} className="relative">
-          <Workspace saved={saved} />
+          <Workspace />
         </ResizablePanel>
         {showSidebarRight && (
           <>
-            <ResizableHandle withHandle className="w-0.5 bg-[#333] focus-visible:ring-offset-0 focus-visible:ring-0" />
+            <ResizableHandle
+              withHandle
+              className="w-0.5 bg-[#333] focus-visible:ring-offset-0 focus-visible:ring-0"
+            />
             <ResizablePanel
               className="bg-[#111]"
               id="sidebar-right"
@@ -92,7 +96,7 @@ export default function App() {
               minSize={100}
               order={3}
             >
-              <TagSidebar saved={saved} />
+              <TagSidebar />
             </ResizablePanel>
           </>
         )}
