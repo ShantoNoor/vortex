@@ -22,6 +22,7 @@ export default function App() {
     selectFolder,
     toggleRightSidebar,
     toggleSidebar,
+    addToRecents,
   } = uiStore();
 
   useEffect(() => {
@@ -30,6 +31,18 @@ export default function App() {
         const data = await window.api.getFiles(savePath);
         if (data.success) {
           setTree(data.tree);
+
+          // adding the auto-opening file to recents
+          const activeFolderSplitArray = activeFolder.split("/");
+          const activeFolderBaseName =
+            activeFolder.split("/")[activeFolderSplitArray.length - 1];
+          const activeFolderIsPdf = activeFolder.toLowerCase().endsWith(".pdf");
+
+          addToRecents({
+            name: activeFolderBaseName,
+            path: activeFolder,
+            isPdf: activeFolderIsPdf,
+          });
         } else {
           alert(`Failed to Open: ${savePath} try to open a valid folder`);
           setSavePath(null);
@@ -70,31 +83,29 @@ export default function App() {
               id="sidebar"
               defaultSize={200}
               minSize={10}
-              order={1}
             >
               <AppSidebar />
             </ResizablePanel>
             <ResizableHandle
               withHandle
-              className="w-0.5 bg-[#333] focus-visible:ring-offset-0 focus-visible:ring-0"
+              className="bg-[#333] focus-visible:ring-offset-0 focus-visible:ring-0"
             />
           </>
         )}
-        <ResizablePanel id="main" order={2} className="relative">
+        <ResizablePanel id="main" className="relative">
           <Workspace />
         </ResizablePanel>
         {showSidebarRight && (
           <>
             <ResizableHandle
               withHandle
-              className="w-0.5 bg-[#333] focus-visible:ring-offset-0 focus-visible:ring-0"
+              className=" bg-[#333] focus-visible:ring-offset-0 focus-visible:ring-0"
             />
             <ResizablePanel
               className="bg-[#111]"
               id="sidebar-right"
               defaultSize={300}
               minSize={100}
-              order={3}
             >
               <TagSidebar />
             </ResizablePanel>

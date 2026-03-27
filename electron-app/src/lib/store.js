@@ -13,6 +13,7 @@ export const uiStore = create(
       sceneLoaded: false,
       fileTransitionIntent: "open", // 'new' | 'open' | 'save',
       saved: false,
+      recents: [],
 
       toggleSidebar: () =>
         set((state) => ({ showSidebar: !state.showSidebar })),
@@ -40,6 +41,19 @@ export const uiStore = create(
       },
       setScrollElement: (scrollElement) => set(() => ({ scrollElement })),
       setSaved: (saved) => set(() => ({ saved })),
+
+      addToRecents: (item) =>
+        set((state) => {
+          const exists = state.recents.some((i) => i.path === item.path);
+          if (exists) return state;
+          return {
+            recents: [...state.recents, item],
+          };
+        }),
+      removeFromRecents: (path) =>
+        set((state) => ({
+          recents: state.recents.filter((item) => item.path !== path),
+        })),
     }),
     {
       name: "vortex-ui-states",

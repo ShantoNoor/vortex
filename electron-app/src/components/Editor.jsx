@@ -262,10 +262,7 @@ export const Editor = () => {
       }
     }
 
-    setTimeout(() => {
-      setSaved(true);
-      console.log("saved");
-    }, 500);
+    setSaved(true);
     setLoading(false);
     setSceneLoaded(true);
   };
