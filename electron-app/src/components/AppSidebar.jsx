@@ -13,6 +13,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
+  Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
@@ -21,7 +22,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
-  SidebarRail,
   SidebarMenuBadge,
   SidebarProvider,
 } from "@/components/ui/sidebar";
@@ -77,42 +77,40 @@ export function AppSidebar({ saved }) {
   return (
     <>
       <SidebarProvider>
-        <SidebarContent className="overflow-x-hidden h-dvh no-scrollbar">
-          <SidebarGroup>
-            <SidebarGroupLabel>Actions</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="min-w-screen">
-                {actions
-                  .filter((item) => item.show)
-                  .map((item, index) => (
-                    <SidebarMenuItem key={index} onClick={item.onClick}>
-                      <SidebarMenuButton>
-                        {item.icon}
-                        {item.name}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+        <Sidebar collapsible="none" className="w-full h-dvh">
+          <SidebarContent className="no-scrollbar">
+            <SidebarGroup>
+              <SidebarGroupLabel>Actions</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="">
+                  {actions
+                    .filter((item) => item.show)
+                    .map((item, index) => (
+                      <SidebarMenuItem key={index} onClick={item.onClick}>
+                        <SidebarMenuButton className="truncate">
+                          {item.icon}
+                          {item.name}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-          <SidebarGroup>
-            <SidebarGroupLabel>{savePath || ""}</SidebarGroupLabel>
-            <SidebarGroupLabel className="text-orange-400">
-              {activeFolder || ""}
-            </SidebarGroupLabel>
-          </SidebarGroup>
-          <SidebarGroup className="">
-            <SidebarGroupContent>
-              <SidebarMenu className="min-w-screen">
-                {tree?.map((item, index) => (
-                  <Tree key={index} item={item} saved={saved} />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarRail />
+            <SidebarGroup className="">
+              <SidebarGroupLabel className="truncate">
+                {savePath || ""}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="">
+                  {tree?.map((item, index) => (
+                    <Tree key={index} item={item} saved={saved} />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
       </SidebarProvider>
     </>
   );
@@ -127,7 +125,7 @@ function Tree({ item, saved }) {
       <SidebarMenuItem>
         <SidebarMenuButton
           isActive={name.path === activeFolder}
-          className="data-[active=true]:bg-accent data-[active=true]:text-orange-400 data-[active=true]:hover:text-orange-400"
+          className="truncate data-[active=true]:bg-accent data-[active=true]:text-orange-400 data-[active=true]:hover:text-orange-400 w-full"
           onClick={() => {
             if (name.path === activeFolder) return;
             if (
@@ -154,6 +152,11 @@ function Tree({ item, saved }) {
           )}
           {name.name}
         </SidebarMenuButton>
+        {name.path === activeFolder && (
+          <SidebarMenuBadge className="hover:bg-red-500 border border-red-50">
+            A
+          </SidebarMenuBadge>
+        )}
       </SidebarMenuItem>
     );
   }
@@ -167,7 +170,7 @@ function Tree({ item, saved }) {
         <CollapsibleTrigger asChild>
           <SidebarMenuButton
             isActive={activeFolder?.includes(name)}
-            className="data-[active=true]:text-orange-400 data-[active=true]:hover:text-orange-400! data-[active=true]:bg-transparent! data-[active=true]:hover:bg-accent!"
+            className="truncate data-[active=true]:text-orange-400 data-[active=true]:hover:text-orange-400! data-[active=true]:bg-transparent! data-[active=true]:hover:bg-accent!"
           >
             <ChevronRight className="transition-transform" />
             <Notebook />
