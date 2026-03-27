@@ -76,7 +76,7 @@ export default function App() {
             >
               <AppSidebar saved={saved} />
             </ResizablePanel>
-            <ResizableHandle />
+            <ResizableHandle withHandle className="w-0.5 bg-[#333]" />
           </>
         )}
         <ResizablePanel id="main" order={2} className="relative">
@@ -84,7 +84,7 @@ export default function App() {
         </ResizablePanel>
         {showSidebarRight && (
           <>
-            <ResizableHandle />
+            <ResizableHandle withHandle className="w-0.5 bg-[#333]" />
             <ResizablePanel
               className="bg-[#111]"
               id="sidebar-right"

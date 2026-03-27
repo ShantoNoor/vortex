@@ -261,7 +261,7 @@ export default function PdfViewer({ pdfPath, saved }) {
                 className={`rounded p-2 transition-colors ${
                   isPanMode
                     ? "bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-[#e0dfff]"
-                    : "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
+                    : "text-gray-600 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
                 }`}
                 title="Pan"
               >
@@ -272,7 +272,7 @@ export default function PdfViewer({ pdfPath, saved }) {
                 className={`rounded p-2 transition-colors ${
                   activeTool === "highlight"
                     ? "bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-[#e0dfff]"
-                    : "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
+                    : "text-gray-600 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
                 }`}
                 title="Highlighter"
               >
@@ -283,7 +283,7 @@ export default function PdfViewer({ pdfPath, saved }) {
                 className={`rounded p-2 transition-colors ${
                   activeTool === "inkHighlighter"
                     ? "bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-[#e0dfff]"
-                    : "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
+                    : "text-gray-600 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
                 }`}
                 title="Pen (Ink Highlighter)"
               >
@@ -291,7 +291,7 @@ export default function PdfViewer({ pdfPath, saved }) {
               </div>
               <div
                 onClick={toggleRightSidebar}
-                className={`rounded p-2 transition-colors text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700`}
+                className={`rounded p-2 transition-colors text-gray-600 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700`}
                 title="Open Right Sidebar"
               >
                 <PanelRight size={18} />
@@ -307,7 +307,7 @@ export default function PdfViewer({ pdfPath, saved }) {
             <div className="flex gap-1">
               <div
                 onClick={toggleSidebar}
-                className={`rounded p-2 transition-colors text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700`}
+                className={`rounded p-2 transition-colors text-gray-600 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700`}
                 title="Open Sidebar"
               >
                 <Sidebar size={18} />
