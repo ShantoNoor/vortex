@@ -1,4 +1,4 @@
-"use client";;
+"use client";
 import { ChevronRight, File, Folder, FolderOpen } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { createContext, useCallback, useContext, useId, useState } from "react";
@@ -35,10 +35,12 @@ export const TreeProvider = ({
   onSelectionChange,
   indent = 20,
   animateExpand = true,
-  className
+  className,
 }) => {
   const [expandedIds, setExpandedIds] = useState(new Set(defaultExpandedIds));
-  const [internalSelectedIds, setInternalSelectedIds] = useState(selectedIds ?? []);
+  const [internalSelectedIds, setInternalSelectedIds] = useState(
+    selectedIds ?? [],
+  );
 
   const isControlled =
     selectedIds !== undefined && onSelectionChange !== undefined;
@@ -56,33 +58,36 @@ export const TreeProvider = ({
     });
   }, []);
 
-  const handleSelection = useCallback((nodeId, ctrlKey = false) => {
-    if (!selectable) {
-      return;
-    }
+  const handleSelection = useCallback(
+    (nodeId, ctrlKey = false) => {
+      if (!selectable) {
+        return;
+      }
 
-    let newSelection;
+      let newSelection;
 
-    if (multiSelect && ctrlKey) {
-      newSelection = currentSelectedIds.includes(nodeId)
-        ? currentSelectedIds.filter((id) => id !== nodeId)
-        : [...currentSelectedIds, nodeId];
-    } else {
-      newSelection = currentSelectedIds.includes(nodeId) ? [] : [nodeId];
-    }
+      if (multiSelect && ctrlKey) {
+        newSelection = currentSelectedIds.includes(nodeId)
+          ? currentSelectedIds.filter((id) => id !== nodeId)
+          : [...currentSelectedIds, nodeId];
+      } else {
+        newSelection = currentSelectedIds.includes(nodeId) ? [] : [nodeId];
+      }
 
-    if (isControlled) {
-      onSelectionChange?.(newSelection);
-    } else {
-      setInternalSelectedIds(newSelection);
-    }
-  }, [
-    selectable,
-    multiSelect,
-    currentSelectedIds,
-    isControlled,
-    onSelectionChange,
-  ]);
+      if (isControlled) {
+        onSelectionChange?.(newSelection);
+      } else {
+        setInternalSelectedIds(newSelection);
+      }
+    },
+    [
+      selectable,
+      multiSelect,
+      currentSelectedIds,
+      isControlled,
+      onSelectionChange,
+    ],
+  );
 
   return (
     <TreeContext.Provider
@@ -97,24 +102,22 @@ export const TreeProvider = ({
         multiSelect,
         indent,
         animateExpand,
-      }}>
+      }}
+    >
       <motion.div
         animate={{ opacity: 1, y: 0 }}
         className={cn("w-full", className)}
         initial={{ opacity: 0, y: 10 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}>
+        transition={{ duration: 0.3, ease: "easeOut" }}
+      >
         {children}
       </motion.div>
     </TreeContext.Provider>
   );
 };
 
-export const TreeView = ({
-  className,
-  children,
-  ...props
-}) => (
-  <div className={cn("p-2", className)} {...props}>
+export const TreeView = ({ className, children, ...props }) => (
+  <div className={cn("p-2 focus-visible:outline-0", className)} {...props}>
     {children}
   </div>
 );
@@ -151,20 +154,19 @@ export const TreeNode = ({
         level,
         isLast,
         parentPath: currentPath,
-      }}>
-      <div className={cn("select-none", className)} {...props}>
+      }}
+    >
+      <div
+        className={cn("select-none focus-visible:outline-0", className)}
+        {...props}
+      >
         {children}
       </div>
     </TreeNodeContext.Provider>
   );
 };
 
-export const TreeNodeTrigger = ({
-  children,
-  className,
-  onClick,
-  ...props
-}) => {
+export const TreeNodeTrigger = ({ children, className, onClick, ...props }) => {
   const { selectedIds, toggleExpanded, handleSelection, indent } = useTree();
   const { nodeId, level } = useTreeNode();
   const isSelected = selectedIds.includes(nodeId);
@@ -172,10 +174,10 @@ export const TreeNodeTrigger = ({
   return (
     <motion.div
       className={cn(
-        "group relative mx-1 flex cursor-pointer items-center rounded-md px-3 py-2 transition-all duration-200",
+        "focus-visible:outline-0 group relative mx-1 flex cursor-pointer items-center rounded-md px-3 py-2 transition-all duration-200",
         "hover:bg-accent/50",
         isSelected && "bg-accent/80",
-        className
+        className,
       )}
       onClick={(e) => {
         toggleExpanded(nodeId);
@@ -184,7 +186,8 @@ export const TreeNodeTrigger = ({
       }}
       style={{ paddingLeft: level * (indent ?? 0) + 8 }}
       whileTap={{ scale: 0.98, transition: { duration: 0.1 } }}
-      {...props}>
+      {...props}
+    >
       <TreeLines />
       {children}
     </motion.div>
@@ -200,7 +203,7 @@ export const TreeLines = () => {
   }
 
   return (
-    <div className="pointer-events-none absolute top-0 bottom-0 left-0">
+    <div className="pointer-events-none absolute top-0 bottom-0 left-0 focus-visible:outline-0">
       {/* Render vertical lines for all parent levels */}
       {Array.from({ length: level }, (_, index) => {
         const shouldHideLine = parentPath[index] === true;
@@ -210,30 +213,33 @@ export const TreeLines = () => {
 
         return (
           <div
-            className="absolute top-0 bottom-0 border-border/40 border-l"
+            className="absolute top-0 bottom-0 border-border/40 border-l focus-visible:outline-0"
             key={index.toString()}
             style={{
               left: index * (indent ?? 0) + 12,
               display: shouldHideLine ? "none" : "block",
-            }} />
+            }}
+          />
         );
       })}
       {/* Horizontal connector line */}
       <div
-        className="absolute top-1/2 border-border/40 border-t"
+        className="absolute top-1/2 border-border/40 border-t focus-visible:outline-0"
         style={{
           left: (level - 1) * (indent ?? 0) + 12,
           width: (indent ?? 0) - 4,
           transform: "translateY(-1px)",
-        }} />
+        }}
+      />
       {/* Vertical line to midpoint for last items */}
       {isLast && (
         <div
-          className="absolute top-0 border-border/40 border-l"
+          className="absolute top-0 border-border/40 border-l focus-visible:outline-0"
           style={{
             left: (level - 1) * (indent ?? 0) + 12,
             height: "50%",
-          }} />
+          }}
+        />
       )}
     </div>
   );
@@ -254,13 +260,14 @@ export const TreeNodeContent = ({
       {hasChildren && isExpanded && (
         <motion.div
           animate={{ height: "auto", opacity: 1 }}
-          className="overflow-hidden"
+          className="overflow-hidden focus-visible:outline-0"
           exit={{ height: 0, opacity: 0 }}
           initial={{ height: 0, opacity: 0 }}
           transition={{
             duration: animateExpand ? 0.3 : 0,
             ease: "easeInOut",
-          }}>
+          }}
+        >
           <motion.div
             animate={{ y: 0 }}
             className={className}
@@ -270,7 +277,8 @@ export const TreeNodeContent = ({
               duration: animateExpand ? 0.2 : 0,
               delay: animateExpand ? 0.1 : 0,
             }}
-            {...props}>
+            {...props}
+          >
             {children}
           </motion.div>
         </motion.div>
@@ -290,21 +298,25 @@ export const TreeExpander = ({
   const isExpanded = expandedIds.has(nodeId);
 
   if (!hasChildren) {
-    return <div className="mr-1 h-4 w-4" />;
+    return <div className="mr-1 h-4 w-4 focus-visible:outline-0" />;
   }
 
   return (
     <motion.div
       animate={{ rotate: isExpanded ? 90 : 0 }}
-      className={cn("mr-1 flex h-4 w-4 cursor-pointer items-center justify-center", className)}
+      className={cn(
+        "mr-1 flex h-4 w-4 cursor-pointer items-center justify-center focus-visible:outline-0",
+        className,
+      )}
       onClick={(e) => {
         e.stopPropagation();
         toggleExpanded(nodeId);
         onClick?.(e);
       }}
       transition={{ duration: 0.2, ease: "easeInOut" }}
-      {...props}>
-      <ChevronRight className="h-3 w-3 text-muted-foreground" />
+      {...props}
+    >
+      <ChevronRight className="h-3 w-3 text-muted-foreground focus-visible:outline-0" />
     </motion.div>
   );
 };
@@ -337,20 +349,18 @@ export const TreeIcon = ({
   return (
     <motion.div
       className={cn(
-        "mr-2 flex h-4 w-4 items-center justify-center text-muted-foreground",
-        className
+        "mr-2 flex h-4 w-4 items-center justify-center text-muted-foreground focus-visible:outline-0",
+        className,
       )}
       transition={{ duration: 0.15 }}
       whileHover={{ scale: 1.1 }}
-      {...props}>
+      {...props}
+    >
       {icon || getDefaultIcon()}
     </motion.div>
   );
 };
 
-export const TreeLabel = ({
-  className,
-  ...props
-}) => (
+export const TreeLabel = ({ className, ...props }) => (
   <span className={cn("font flex-1 truncate text-sm", className)} {...props} />
 );
