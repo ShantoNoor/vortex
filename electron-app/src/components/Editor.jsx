@@ -486,25 +486,37 @@ export const Editor = () => {
       });
 
       if (nearestElement) {
+        let selectedElementsNewElementBoundingBox = {};
         if (d === "down") {
-          mutateElement(selectedElement, {
+          selectedElementsNewElementBoundingBox = {
             x: nearestElement.x,
             y: nearestElement.y + nearestElement.height + 5,
             width: nearestElement.width,
             height:
               (nearestElement.width / selectedElement.width) *
               selectedElement.height,
-          });
+          };
         } else if (d === "right") {
-          mutateElement(selectedElement, {
+          selectedElementsNewElementBoundingBox = {
             x: nearestElement.x + nearestElement.width + 100,
             y: nearestElement.y,
             width: nearestElement.width,
             height:
               (nearestElement.width / selectedElement.width) *
               selectedElement.height,
-          });
+          };
         }
+
+        excalidrawAPI.updateScene({
+          elements: elements.map((el) =>
+            el.id === selectedId
+              ? {
+                  ...el,
+                  ...selectedElementsNewElementBoundingBox,
+                }
+              : el,
+          ),
+        });
       }
     }
   };
