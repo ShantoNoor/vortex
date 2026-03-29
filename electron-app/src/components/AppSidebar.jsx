@@ -18,6 +18,7 @@ import {
 } from "@/components/kibo-ui/tree";
 
 import { uiStore } from "../lib/store";
+import { useEffect } from "react";
 
 export function AppSidebar() {
   const {
@@ -30,6 +31,8 @@ export function AppSidebar() {
     recents,
     removeFromRecents,
     saved,
+    setTree,
+    setSavePath,
   } = uiStore();
 
   const actions = [
@@ -68,6 +71,24 @@ export function AppSidebar() {
       show: true,
     },
   ];
+
+  useEffect(() => {
+    async function run() {
+      if (savePath) {
+        const data = await window.api.getFiles(savePath);
+        if (data.success) {
+          setTree(data.tree);
+          console.log(data.path);
+          if (data.path !== savePath) {
+            setSavePath(data.path);
+            setActiveFolder(null);
+          }
+        }
+      }
+    }
+
+    run();
+  }, []);
 
   return (
     <aside className="h-dvh flex flex-col bg-background border-r">

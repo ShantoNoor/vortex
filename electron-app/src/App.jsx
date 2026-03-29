@@ -45,17 +45,23 @@ export default function App() {
 
   useEffect(() => {
     async function run() {
-      if (savePath !== null) {
+      if (import.meta.env.VITE_API_URL) {
+        await selectFolder();
+      } else if (savePath !== null) {
         const data = await window.api.getFiles(savePath);
         if (data.success) {
           setTree(data.tree);
+          console.log(data.path);
+
+          if (data.path !== savePath) {
+            setSavePath(data.path);
+            setActiveFolder(null);
+          }
         } else {
           alert(`Failed to Open: ${savePath} try to open a valid folder`);
           setSavePath(null);
           setActiveFolder(null);
         }
-      } else if (import.meta.env.VITE_API_URL) {
-        await selectFolder();
       }
 
       if (activeFolder) {

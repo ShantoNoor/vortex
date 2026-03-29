@@ -32,11 +32,13 @@ export const uiStore = create(
       selectFolder: async () => {
         const data = await window.api.selectFolder();
         if (data.success) {
-          set({
+          set((state) => ({
             savePath: data.path,
             tree: data.tree,
-            activeFolder: null,
-          });
+            activeFolder: state.activeFolder?.startsWith(data.path)
+              ? state.activeFolder
+              : null,
+          }));
         }
       },
       setScrollElement: (scrollElement) => set(() => ({ scrollElement })),

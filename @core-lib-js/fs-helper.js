@@ -59,7 +59,7 @@ export async function getFilesfs(folderPath, initdb = true) {
       cleanupDeletedFolders(folderPath);
     }
 
-    return { success: true, tree: files };
+    return { success: true, tree: files, path: folderPath };
   } catch (err) {
     return { success: false, error: err.message };
   }

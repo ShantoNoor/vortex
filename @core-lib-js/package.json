@@ -1,6 +1,6 @@
 {
   "name": "vortex-core-lib-js",
-  "version": "1.0.0",
+  "version": "1.0.0z",
   "type": "module",
   "description": "vortex-core-lib-js",
   "exports": {
