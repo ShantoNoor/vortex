@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.MotionEvent
 import android.view.ViewGroup
 import android.webkit.ConsoleMessage
 import android.webkit.JsPromptResult
@@ -43,7 +44,7 @@ import android.webkit.MimeTypeMap
 import android.webkit.WebResourceResponse
 import androidx.webkit.WebViewAssetLoader
 
-@SuppressLint("SetJavaScriptEnabled")
+@SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
 @Composable
 fun FullScreenWebView(modifier: Modifier = Modifier, onReady: () -> Unit) {
     val context = LocalContext.current
@@ -154,11 +155,60 @@ fun FullScreenWebView(modifier: Modifier = Modifier, onReady: () -> Unit) {
         }
     }
 
+    var isIgnoringGesture by remember { mutableStateOf(false) }
     AndroidView(
         modifier = modifier.fillMaxSize().background(Color("#222222".toColorInt())),
         factory = { ctx ->
             WebView(ctx).apply {
                 webViewRef = this
+
+                // --- THE "NO DOUBLE-TAP" TOUCH LISTENER ---
+                setOnTouchListener { view, event ->
+                    val action = event.actionMasked
+
+                    // 1. When the last finger lifts, reset our flag and swallow
+                    if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                        val wasIgnoring = isIgnoringGesture
+                        isIgnoringGesture = false
+                        if (wasIgnoring) {
+                            return@setOnTouchListener true
+                        }
+                        return@setOnTouchListener false
+                    }
+
+                    // 2. Trigger the cancel state cleanly
+                    if (event.pointerCount >= 3) {
+                        if (!isIgnoringGesture) {
+                            isIgnoringGesture = true
+
+                            val cancelEvent = MotionEvent.obtain(event)
+                            cancelEvent.action = MotionEvent.ACTION_CANCEL
+
+                            // A: We post the Cancel event to the UI thread queue.
+                            // This ensures it runs immediately AFTER the WebView registers the 3rd finger.
+                            view.post {
+                                view.onTouchEvent(cancelEvent)
+                                cancelEvent.recycle()
+                            }
+
+                            // B: Return FALSE this ONE time so the WebView properly registers
+                            // the 3rd finger. Otherwise, it drops our Cancel event!
+                            return@setOnTouchListener false
+                        }
+
+                        // Swallow all subsequent 3-finger movements
+                        return@setOnTouchListener true
+                    }
+
+                    // 3. Keep swallowing as your hand is lifting off the screen
+                    if (isIgnoringGesture) {
+                        return@setOnTouchListener true
+                    }
+
+                    // 4. Normal 1 or 2 finger touches pass through normally
+                    false
+                }
+                // ------------------------------------------
 
                 val assetLoader = WebViewAssetLoader.Builder()
                     .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(context))
