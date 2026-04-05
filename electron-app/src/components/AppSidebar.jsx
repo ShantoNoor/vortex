@@ -107,7 +107,7 @@ export function AppSidebar() {
               <TreeNodeContent hasChildren>
                 {actions
                   .filter((item) => item.show)
-                  .map((item) => (
+                  ?.map((item) => (
                     <TreeNode nodeId={item.name} key={item.name}>
                       <TreeNodeTrigger onClick={item.onClick}>
                         <TreeExpander />
@@ -134,7 +134,7 @@ export function AppSidebar() {
                   <TreeLabel>Recents</TreeLabel>
                 </TreeNodeTrigger>
                 <TreeNodeContent hasChildren>
-                  {recents.map((item) => (
+                  {recents?.map((item) => (
                     <TreeNode
                       className="relative"
                       nodeId={item.path}
@@ -193,7 +193,7 @@ export function AppSidebar() {
           </TreeProvider>
         )}
 
-        {tree && tree.length > 0 && (
+        {savePath && (
           <TreeProvider
             defaultExpandedIds={[
               "src-shanto-loves-coding",
@@ -212,7 +212,7 @@ export function AppSidebar() {
                   <TreeLabel>{savePath}</TreeLabel>
                 </TreeNodeTrigger>
                 <TreeNodeContent hasChildren>
-                  {tree.map((item, index) => (
+                  {tree?.map((item, index) => (
                     <KiboTree
                       key={index}
                       item={item}
@@ -291,7 +291,7 @@ function KiboTree({ item, level = 1, isLast }) {
         <TreeLabel className="truncate">{name}</TreeLabel>
       </TreeNodeTrigger>
       <TreeNodeContent hasChildren>
-        {items.map((subItem, index) => (
+        {items?.map((subItem, index) => (
           <KiboTree
             key={index}
             item={subItem}
