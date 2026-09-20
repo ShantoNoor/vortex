@@ -4,7 +4,6 @@ import {
   CaptureUpdateAction,
   Footer,
   Sidebar,
-  mutateElement,
   WelcomeScreen,
 } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
@@ -25,6 +24,7 @@ import {
   PinOff,
   Sidebar as SidebarIcon,
   Tag,
+  Bandage,
 } from "lucide-react";
 import { uiStore } from "../lib/store";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -64,15 +64,6 @@ const chunkWidth = 2000;
 const batchSize = 10;
 let ids = new Set([]);
 
-// sm: 16, md: 20, lg: 28, xl: 36,
-const initialData = {
-  appState: {
-    viewBackgroundColor: "#222",
-    currentItemStrokeColor: "#c2255c",
-    currentItemFontSize: 36,
-  },
-};
-
 export const Editor = () => {
   const imagesOpenRef = useRef(null);
   const abortControllersRef = useRef({});
@@ -84,6 +75,7 @@ export const Editor = () => {
   const [pdfName, setPdfName] = useState(""); // for copying name of pdf file while importing pdf file
   const [loading, setLoading] = useState(true);
   const [loadingOpacity, setLoadingOpacity] = useState("1");
+  const [legacyColor, setLegacyColor] = useState(false);
 
   const {
     toggleSidebar,
@@ -207,12 +199,12 @@ export const Editor = () => {
       if (data.success) {
         ids = new Set(data.idList);
 
-        const currentState = excalidrawAPI.getAppState();
         excalidrawAPI.updateScene({
           elements: data.elements,
           appState: data.appState,
           captureUpdate: CaptureUpdateAction.IMMEDIATELY,
         });
+        setLegacyColor(data.appState?.legacyColor || false);
 
         if (!import.meta.env.VITE_ANDROID_BUILD) {
           excalidrawAPI.addFiles(data.files);
@@ -300,6 +292,12 @@ export const Editor = () => {
       zenModeEnabled: appState.zenModeEnabled,
       zoom: appState.zoom,
       viewModeEnabled: appState.viewModeEnabled,
+      objectsSnapModeEnabled: appState.objectsSnapModeEnabled,
+      bindMode: appState.bindMode,
+      boxSelectionMode: appState.boxSelectionMode,
+      legacyColor,
+      isMidpointSnappingEnabled: appState.isMidpointSnappingEnabled,
+      bindingPreference: appState.bindingPreference
     };
 
     const data = await window.api.handleSave({
@@ -551,13 +549,16 @@ export const Editor = () => {
       height = height * scale;
     }
 
+    width = legacyColor ? width : width / 3;
+    height = legacyColor ? height : height / 3;
+
     const imageElement = {
       id: elementId,
       type: "image",
       x,
       y,
-      width: width / 3,
-      height: height / 3,
+      width,
+      height,
       angle: 0,
       strokeColor: "transparent",
       backgroundColor: "transparent",
@@ -595,7 +596,7 @@ export const Editor = () => {
       },
     ]);
 
-    return height / 3;
+    return height;
   };
 
   const insertImages = async (files, gap = 20) => {
@@ -852,13 +853,14 @@ export const Editor = () => {
   return (
     <>
       <Excalidraw
+        className={`${legacyColor ? "excalidraw-legacy" : ""}`}
         onExcalidrawAPI={(api) => {
           api?.onEvent("editor:mount", async ({ excalidrawAPI, container }) => {
             setExcalidrawAPI(excalidrawAPI);
             await run(excalidrawAPI);
           });
         }}
-        initialData={initialData}
+        theme="dark"
         onPointerUp={(_, __) => {
           if (saved) {
             setSaved(false);
@@ -953,6 +955,16 @@ export const Editor = () => {
             <></>
           )}
           <MainMenu.Separator />
+          <MainMenu.DefaultItems.Preferences />
+          {/* <MainMenu.DefaultItems.ToggleTheme /> */}
+          <MainMenu.Item
+            icon={<Bandage strokeWidth={1.5} />}
+            onSelect={() => {
+              setLegacyColor((c) => !c);
+            }}
+          >
+            Toggle Legacy Color
+          </MainMenu.Item>
           <MainMenu.DefaultItems.ChangeCanvasBackground />
         </MainMenu>
         <Sidebar name="tag" className="bg-[#111]! w-[400px]!">
