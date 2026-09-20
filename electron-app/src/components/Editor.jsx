@@ -556,8 +556,8 @@ export const Editor = () => {
       type: "image",
       x,
       y,
-      width,
-      height,
+      width: width / 3,
+      height: height / 3,
       angle: 0,
       strokeColor: "transparent",
       backgroundColor: "transparent",
@@ -595,7 +595,7 @@ export const Editor = () => {
       },
     ]);
 
-    return height;
+    return height / 3;
   };
 
   const insertImages = async (files, gap = 20) => {
