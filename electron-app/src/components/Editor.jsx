@@ -836,17 +836,17 @@ export const Editor = () => {
           selectDirection("up");
         } else if (e.key === "'") {
           selectDirection("down");
-        } else if (e.key === "/" || e.key === "w") {
+        } else if (e.key === "/" || (e.ctrlKey && e.key === "w")) {
           selectDirection("slide_down");
         } else if (e.key === "[") {
           toggleLockAllElements(true);
         } else if (e.key === "]") {
           toggleLockAllElements(false);
-        } else if (e.key === "j") {
+        } else if (e.ctrlKey && e.key === "j") {
           openTagWindow();
-        } else if (e.key === "n") {
+        } else if (e.ctrlKey && e.key === "n") {
           autoSet("down");
-        } else if (e.key === "m") {
+        } else if (e.ctrlKey && e.key === "m") {
           autoSet("right");
         }
       }

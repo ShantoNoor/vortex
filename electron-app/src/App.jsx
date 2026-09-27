@@ -84,9 +84,9 @@ export default function App() {
 
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === "b") {
+      if (e.ctrlKey && e.key === "b") {
         toggleSidebar();
-      } else if (e.key === "u") {
+      } else if (e.ctrlKey && e.key === "u") {
         toggleRightSidebar();
       }
     };

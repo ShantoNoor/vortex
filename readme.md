@@ -58,6 +58,22 @@ yarn android
 
 - Now you can run the Android Project.
 
+## Keyboard Shortcuts
+| Shortcut | Action | Condition |
+| --- | --- | --- |
+| Ctrl + B | Toggle sidebar | Always active |
+| Ctrl + U | Toggle right sidebar | Always active |
+| , | Select direction: Left | When not typing |
+| . | Select direction: Right | When not typing |
+| ; | Select direction: Up | When not typing |
+| ' | Select direction: Down | When not typing |
+| / or Ctrl + W | Select direction: Slide Down | When not typing |
+| [ | Lock all elements | When not typing |
+| ] | Unlock all elements | When not typing |
+| Ctrl + J | Open tag window | When not typing |
+| Ctrl + N | Auto set direction: Down | When not typing |
+| Ctrl + M | Auto set direction: Right | When not typing |
+
 ## Fedora Linux Build Issue Solve:
 
 > https://github.com/electron/forge/issues/3701
