@@ -5,8 +5,7 @@ import { Editor } from "./Editor";
 import PdfViewer from "./PdfViewer";
 
 export default function Workspace() {
-  const { activeFolder, fileTransitionIntent } = uiStore();
-  const [sessionKey, setSessionKey] = useState(() => generateUUID());
+  const { activeFolder, fileTransitionIntent, sessionKey, setSessionKey } = uiStore();
 
   useEffect(() => {
     if (fileTransitionIntent === "new" || fileTransitionIntent === "open") {

@@ -20,6 +20,8 @@ import {
 import { uiStore } from "../lib/store";
 import { useEffect } from "react";
 
+import { generateUUID } from "../lib/utils";
+
 export function AppSidebar() {
   const {
     selectFolder,
@@ -33,6 +35,7 @@ export function AppSidebar() {
     saved,
     setTree,
     setSavePath,
+    setSessionKey,
   } = uiStore();
 
   const actions = [
@@ -47,6 +50,7 @@ export function AppSidebar() {
           return;
         }
         setActiveFolder(null, "new");
+        setSessionKey(generateUUID());
       },
       show: import.meta.env.VITE_API_URL ? false : true,
     },

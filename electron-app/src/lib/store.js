@@ -14,7 +14,9 @@ export const uiStore = create(
       fileTransitionIntent: "open", // 'new' | 'open' | 'save',
       saved: false,
       recents: [],
+      sessionKey: null,
 
+      setSessionKey: (skey) => set(() => ({ sessionKey: skey })),
       toggleSidebar: () =>
         set((state) => ({ showSidebar: !state.showSidebar })),
       toggleRightSidebar: () =>

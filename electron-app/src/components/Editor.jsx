@@ -64,6 +64,13 @@ const chunkWidth = 2000;
 const batchSize = 10;
 let ids = new Set([]);
 
+const initialData = {
+  appState: {
+    viewBackgroundColor: "#222",
+    currentItemStrokeColor: "#4dabf7",
+  },
+};
+
 export const Editor = () => {
   const imagesOpenRef = useRef(null);
   const abortControllersRef = useRef({});
@@ -75,7 +82,7 @@ export const Editor = () => {
   const [pdfName, setPdfName] = useState(""); // for copying name of pdf file while importing pdf file
   const [loading, setLoading] = useState(true);
   const [loadingOpacity, setLoadingOpacity] = useState("1");
-  const [legacyColor, setLegacyColor] = useState(false);
+  const [legacyImportSize, setLegacyImportSize] = useState(false);
 
   const {
     toggleSidebar,
@@ -204,7 +211,7 @@ export const Editor = () => {
           appState: data.appState,
           captureUpdate: CaptureUpdateAction.IMMEDIATELY,
         });
-        setLegacyColor(data.appState?.legacyColor || false);
+        setLegacyImportSize(data.appState?.legacyImportSize || false);
 
         if (!import.meta.env.VITE_ANDROID_BUILD) {
           excalidrawAPI.addFiles(data.files);
@@ -295,7 +302,7 @@ export const Editor = () => {
       objectsSnapModeEnabled: appState.objectsSnapModeEnabled,
       bindMode: appState.bindMode,
       boxSelectionMode: appState.boxSelectionMode,
-      legacyColor,
+      legacyImportSize,
       isMidpointSnappingEnabled: appState.isMidpointSnappingEnabled,
       bindingPreference: appState.bindingPreference
     };
@@ -549,8 +556,8 @@ export const Editor = () => {
       height = height * scale;
     }
 
-    width = legacyColor ? width : width / 3;
-    height = legacyColor ? height : height / 3;
+    width = legacyImportSize ? width : width / 3;
+    height = legacyImportSize ? height : height / 3;
 
     const imageElement = {
       id: elementId,
@@ -853,14 +860,14 @@ export const Editor = () => {
   return (
     <>
       <Excalidraw
-        className={`${legacyColor ? "excalidraw-legacy" : ""}`}
         onExcalidrawAPI={(api) => {
           api?.onEvent("editor:mount", async ({ excalidrawAPI, container }) => {
             setExcalidrawAPI(excalidrawAPI);
             await run(excalidrawAPI);
           });
         }}
-        theme="dark"
+        initialData={initialData}
+        theme="light"
         onPointerUp={(_, __) => {
           if (saved) {
             setSaved(false);
@@ -960,10 +967,10 @@ export const Editor = () => {
           <MainMenu.Item
             icon={<Bandage strokeWidth={1.5} />}
             onSelect={() => {
-              setLegacyColor((c) => !c);
+              setLegacyImportSize((c) => !c);
             }}
           >
-            Toggle Legacy Color
+            {`Legacy Import Size ${legacyImportSize ? "On" : "Off"}`}
           </MainMenu.Item>
           <MainMenu.DefaultItems.ChangeCanvasBackground />
         </MainMenu>
