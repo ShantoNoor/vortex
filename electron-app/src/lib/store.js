@@ -15,8 +15,10 @@ export const uiStore = create(
       saved: false,
       recents: [],
       sessionKey: null,
+      treeKey: null,
 
       setSessionKey: (skey) => set(() => ({ sessionKey: skey })),
+      setTreeKey: (tkey) => set(() => ({ treeKey: tkey })),
       toggleSidebar: () =>
         set((state) => ({ showSidebar: !state.showSidebar })),
       toggleRightSidebar: () =>

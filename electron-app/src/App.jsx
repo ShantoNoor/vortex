@@ -35,6 +35,7 @@ export default function App() {
     toggleRightSidebar,
     toggleSidebar,
     addToRecents,
+    treeKey,
   } = uiStore();
 
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
@@ -116,7 +117,7 @@ export default function App() {
               minSize={10}
               groupResizeBehavior="preserve-pixel-size"
             >
-              <AppSidebar />
+              <AppSidebar key={treeKey} />
             </ResizablePanel>
             <ResizableHandle
               withHandle

@@ -97,6 +97,7 @@ export const Editor = () => {
     setSceneLoaded,
     saved,
     setSaved,
+    setTreeKey,
   } = uiStore();
 
   const getAbortSignal = useCallback((operationName) => {
@@ -304,7 +305,7 @@ export const Editor = () => {
       boxSelectionMode: appState.boxSelectionMode,
       legacyImportSize,
       isMidpointSnappingEnabled: appState.isMidpointSnappingEnabled,
-      bindingPreference: appState.bindingPreference
+      bindingPreference: appState.bindingPreference,
     };
 
     const data = await window.api.handleSave({
@@ -355,10 +356,7 @@ export const Editor = () => {
 
       if (activeFolder === null) {
         setActiveFolder(data.activeFolder, "save");
-        const data2 = await window.api.getFiles(savePath);
-        if (data2.success && !signal.aborted) {
-          setTree(data2.tree);
-        }
+        setTreeKey(generateUUID());
       }
 
       if (!import.meta.env.VITE_ANDROID_BUILD)
