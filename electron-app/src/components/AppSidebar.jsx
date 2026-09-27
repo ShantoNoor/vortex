@@ -49,6 +49,13 @@ export function AppSidebar() {
         ) {
           return;
         }
+        if (
+          activeFolder &&
+          !saved &&
+          !confirm("Sure then Ok else Cancel and Save! ...")
+        ) {
+          return;
+        }
         setActiveFolder(null, "new");
         setSessionKey(generateUUID());
       },
@@ -60,6 +67,13 @@ export function AppSidebar() {
       onClick: () => {
         if (
           !activeFolder &&
+          !confirm("Sure then Ok else Cancel and Save! ...")
+        ) {
+          return;
+        }
+        if (
+          activeFolder &&
+          !saved &&
           !confirm("Sure then Ok else Cancel and Save! ...")
         ) {
           return;
