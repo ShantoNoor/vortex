@@ -770,7 +770,7 @@ export const Editor = () => {
           excalidrawAPI.setToast({
             message: `PDF loading ${i + 1}/${numSegments} ${pageNum}/${numPages} pages.`,
             closable: true,
-            duration: 2000,
+            duration: Infinity,
           });
         }
 
