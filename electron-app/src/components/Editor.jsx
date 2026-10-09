@@ -619,9 +619,23 @@ export const Editor = () => {
     });
     setLoading(true);
 
-    let x = 0;
-    let y = 0;
-    let i = 1;
+    const elements = excalidrawAPI.getSceneElements();
+    let [x, y, i] = [0, 0, 1];
+
+    if (elements.length > 0) {
+      x = elements[0]?.x;
+      y = elements[0]?.y;
+    }
+
+    elements.forEach((el) => {
+      const el_x = el.x + el.width;
+      const el_y = el.y;
+      if (x < el_x) x = el_x;
+      if (y > el_y) y = el_y;
+    });
+
+    x += 100;
+
     for (const file of files) {
       if (signal.aborted) break; // Break loop if cancelled
 
@@ -704,8 +718,12 @@ export const Editor = () => {
     setLoading(true);
 
     const elements = excalidrawAPI.getSceneElements();
-    let x = elements[0]?.x || 0;
-    let y = elements[0]?.y || 0;
+    let [x, y] = [0, 0];
+
+    if (elements.length > 0) {
+      x = elements[0]?.x;
+      y = elements[0]?.y;
+    }
 
     elements.forEach((el) => {
       const el_x = el.x + el.width;
@@ -775,16 +793,20 @@ export const Editor = () => {
 
           if (signal.aborted) break;
 
-          const imageFile = await getCanvasBlob(segmentCanvas, "image/jpeg");
-          const imageHeight = await insertImage(imageFile, x, y, 0, signal);
-          y += imageHeight;
+          // const imageFile = await getCanvasBlob(segmentCanvas, "image/jpeg");
+          // const imageHeight = await insertImage(imageFile, x, y, 0, signal);
 
-          console.log({
-            name: "handlePDFImport",
-            imageHeight,
-            segmentWidth: segmentCanvas.width,
-            segmentHeight: segmentCanvas.height,
-          });
+          const base64 = segmentCanvas.toDataURL("image/jpeg", 0.85);
+          const imageHeight = await renderImage(
+            base64,
+            x,
+            y,
+            0,
+            segmentCanvas.width,
+            segmentCanvas.height,
+            "image/jpeg",
+          );
+          y += imageHeight;
 
           segmentCanvas.width = 0;
           segmentCanvas.height = 0;
