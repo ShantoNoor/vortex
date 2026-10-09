@@ -119,9 +119,7 @@ export const Editor = () => {
 
   useEffect(() => {
     if (sceneLoaded && scrollElement) {
-      excalidrawAPI.scrollToContent(scrollElement, {
-        fitToContent: true,
-      });
+      excalidrawAPI.setViewport({ target: scrollElement, fit: "contain" });
 
       setScrollElement(null);
     }
@@ -524,26 +522,7 @@ export const Editor = () => {
     }
   };
 
-  const insertImage = async (file, x, y, gap, signal) => {
-    const options = {
-      maxSizeMB: 1,
-      useWebWorker: true,
-      signal, // Native abort support for browser-image-compression
-    };
-
-    file = await imageCompression(file, options);
-    if (signal?.aborted) return 0;
-
-    const fileUrl = URL.createObjectURL(file);
-
-    let { width, height } = await getImageDimensions(fileUrl);
-    URL.revokeObjectURL(fileUrl);
-
-    if (signal?.aborted) return 0;
-
-    const base64 = await fileToBase64(file);
-    if (signal?.aborted) return 0;
-
+  const renderImage = (base64, x, y, gap, width, height, fileType) => {
     const imageId = generateUUID();
     const elementId = generateUUID();
 
@@ -594,14 +573,40 @@ export const Editor = () => {
     excalidrawAPI.addFiles([
       {
         id: imageId,
-        mimeType: file.type,
+        mimeType: fileType,
         dataURL: base64,
         created: Date.now(),
         lastRetrieved: Date.now(),
       },
     ]);
 
+    excalidrawAPI.setViewport({ target: imageElement, fit: "contain" });
+
     return height;
+  };
+
+  const insertImage = async (file, x, y, gap, signal) => {
+    const options = {
+      maxSizeMB: 1,
+      useWebWorker: true,
+      signal, // Native abort support for browser-image-compression
+    };
+
+    file = await imageCompression(file, options);
+    if (signal?.aborted) return 0;
+
+    const fileUrl = URL.createObjectURL(file);
+
+    let { width, height } = await getImageDimensions(fileUrl);
+    URL.revokeObjectURL(fileUrl);
+
+    if (signal?.aborted) return 0;
+
+    const base64 = await fileToBase64(file);
+
+    if (signal?.aborted) return 0;
+
+    return renderImage(base64, x, y, gap, width, height, file.type); // returns height
   };
 
   const insertImages = async (files, gap = 20) => {
@@ -698,8 +703,18 @@ export const Editor = () => {
 
     setLoading(true);
 
-    let x = 0;
-    let y = 0;
+    const elements = excalidrawAPI.getSceneElements();
+    let x = elements[0]?.x || 0;
+    let y = elements[0]?.y || 0;
+
+    elements.forEach((el) => {
+      const el_x = el.x + el.width;
+      const el_y = el.y;
+      if (x < el_x) x = el_x;
+      if (y > el_y) y = el_y;
+    });
+
+    x += 100;
 
     try {
       const arrayBuffer = await file.arrayBuffer();
@@ -763,6 +778,13 @@ export const Editor = () => {
           const imageFile = await getCanvasBlob(segmentCanvas, "image/jpeg");
           const imageHeight = await insertImage(imageFile, x, y, 0, signal);
           y += imageHeight;
+
+          console.log({
+            name: "handlePDFImport",
+            imageHeight,
+            segmentWidth: segmentCanvas.width,
+            segmentHeight: segmentCanvas.height,
+          });
 
           segmentCanvas.width = 0;
           segmentCanvas.height = 0;
