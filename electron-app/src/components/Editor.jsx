@@ -83,6 +83,7 @@ export const Editor = () => {
   const [loading, setLoading] = useState(true);
   const [loadingOpacity, setLoadingOpacity] = useState("1");
   const [legacyImportSize, setLegacyImportSize] = useState(false);
+  const [pinned, setPinned] = useState(false);
 
   const {
     toggleSidebar,
@@ -399,6 +400,12 @@ export const Editor = () => {
           : el;
       }),
       captureUpdate: CaptureUpdateAction.IMMEDIATELY,
+    });
+
+    excalidrawAPI.setToast({
+      message: locked ? "Pinned" : "Unpinned",
+      closable: true,
+      duration: 1000,
     });
   };
 
@@ -865,38 +872,398 @@ export const Editor = () => {
   };
 
   useEffect(() => {
-    const handler = (e) => {
+    let activeGamepadIndex = null;
+    let previousButtonStates = [];
+    let previousAxisStates = [];
+    let animationFrameId;
+
+    const AXIS_DEADZONE = 0.15;
+    const TRIGGER_DEADZONE = 0.05;
+
+    let virtualMouseX = window.innerWidth / 2;
+    let virtualMouseY = window.innerHeight / 2;
+    const MOUSE_SPEED = 2;
+
+    let cursorEl = document.getElementById("virtual-gamepad-cursor");
+    if (!cursorEl) {
+      cursorEl = document.createElement("div");
+      cursorEl.id = "virtual-gamepad-cursor";
+      cursorEl.style.position = "fixed";
+      cursorEl.style.width = "10px";
+      cursorEl.style.height = "10px";
+      cursorEl.style.backgroundColor = "rgba(0, 0, 255, 0.8)";
+      cursorEl.style.border = "1px solid white";
+      cursorEl.style.borderRadius = "50%";
+      cursorEl.style.pointerEvents = "none";
+      cursorEl.style.zIndex = "999999";
+      cursorEl.style.transform = "translate(-50%, -50%)";
+      cursorEl.style.left = `${virtualMouseX}px`;
+      cursorEl.style.top = `${virtualMouseY}px`;
+      cursorEl.style.display = "none";
+      document.body.appendChild(cursorEl);
+    }
+
+    let leftMouseClick = false;
+    let rightMouseClick = false;
+    const dispatchPointerEvent = (type, buttonCode) => {
+      const target =
+        document.elementFromPoint(virtualMouseX, virtualMouseY) ||
+        document.body;
+      const event = new PointerEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        clientX: virtualMouseX,
+        clientY: virtualMouseY,
+        button: buttonCode,
+        buttons: (leftMouseClick ? 1 : 0) | (rightMouseClick ? 2 : 0),
+        pointerId: 1,
+        pointerType: "mouse",
+        isPrimary: true,
+      });
+      target.dispatchEvent(event);
+    };
+
+    const handleKeyDown = (e) => {
       const isTyping =
         e.target.tagName === "INPUT" ||
         e.target.tagName === "TEXTAREA" ||
         e.target.isContentEditable;
 
       if (!isTyping) {
-        if (e.key === ",") {
-          selectDirection("left");
-        } else if (e.key === ".") {
-          selectDirection("right");
-        } else if (e.key === ";") {
-          selectDirection("up");
-        } else if (e.key === "'") {
-          selectDirection("down");
-        } else if (e.key === "/" || (e.ctrlKey && e.key === "w")) {
+        if (e.key === ",") selectDirection("left");
+        else if (e.key === ".") selectDirection("right");
+        else if (e.key === ";") selectDirection("up");
+        else if (e.key === "'") selectDirection("down");
+        else if (e.key === "/" || (e.ctrlKey && e.key === "w"))
           selectDirection("slide_down");
-        } else if (e.key === "[") {
-          toggleLockAllElements(true);
-        } else if (e.key === "]") {
-          toggleLockAllElements(false);
-        } else if (e.ctrlKey && e.key === "j") {
-          openTagWindow();
-        } else if (e.ctrlKey && e.key === "n") {
-          autoSet("down");
-        } else if (e.ctrlKey && e.key === "m") {
-          autoSet("right");
+        else if (e.key === "[") toggleLockAllElements(true);
+        else if (e.key === "]") toggleLockAllElements(false);
+        else if (e.ctrlKey && e.key === "j") openTagWindow();
+        else if (e.ctrlKey && e.key === "n") autoSet("down");
+        else if (e.ctrlKey && e.key === "m") autoSet("right");
+      }
+    };
+
+    const checkExistingGamepads = () => {
+      const gamepads = navigator.getGamepads();
+      for (const gp of gamepads) {
+        if (gp) {
+          activeGamepadIndex = gp.index;
+          previousButtonStates = new Array(gp.buttons.length).fill(0);
+          previousAxisStates = new Array(gp.axes.length).fill(0);
+          if (cursorEl) cursorEl.style.display = "block";
+          break;
         }
       }
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+
+    const handleGamepadConnected = (e) => {
+      activeGamepadIndex = e.gamepad.index;
+      previousButtonStates = new Array(e.gamepad.buttons.length).fill(0);
+      previousAxisStates = new Array(e.gamepad.axes.length).fill(0);
+      if (cursorEl) cursorEl.style.display = "block";
+    };
+
+    const handleGamepadDisconnected = (e) => {
+      if (e.gamepad.index === activeGamepadIndex) {
+        activeGamepadIndex = null;
+        previousButtonStates = [];
+        previousAxisStates = [];
+        if (cursorEl) cursorEl.style.display = "none";
+      }
+    };
+
+    function triggerUndo() {
+      const excalidrawContainer = document.querySelector(".excalidraw");
+      if (!excalidrawContainer) return;
+
+      const isMac = navigator.platform.includes("Mac");
+      const event = new KeyboardEvent("keydown", {
+        key: "z",
+        code: "KeyZ",
+        ctrlKey: !isMac,
+        metaKey: isMac,
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      });
+      excalidrawContainer.dispatchEvent(event);
+    }
+
+    function triggerRedo() {
+      const excalidrawContainer = document.querySelector(".excalidraw");
+      if (!excalidrawContainer) return;
+
+      const isMac = navigator.platform.includes("Mac");
+      const event = new KeyboardEvent("keydown", {
+        key: "z",
+        code: "KeyZ",
+        ctrlKey: !isMac,
+        metaKey: isMac,
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      });
+      excalidrawContainer.dispatchEvent(event);
+    }
+
+    const selectTool = (type) => {
+      if (!excalidrawAPI) return;
+      const current = excalidrawAPI.getAppState().activeTool?.type;
+
+      // Toggle behaviour: pressing the active tool returns to selection,
+      // matching Excalidraw's keyboard shortcut behaviour (press "r" twice).
+      const next =
+        current === type && type !== "selection" ? "selection" : type;
+
+      if (next === "rectangle" || next === "line")
+        cursorEl.style.backgroundColor = "rgba(255, 0, 0, 0.9)";
+      else cursorEl.style.backgroundColor = "rgba(0, 0, 255, 0.8)";
+
+      excalidrawAPI.setActiveTool({ type: next });
+    };
+
+    const pollGamepads = () => {
+      const gamepads = navigator.getGamepads();
+      if (activeGamepadIndex !== null && gamepads[activeGamepadIndex]) {
+        const gp = gamepads[activeGamepadIndex];
+
+        gp?.buttons.forEach((button, index) => {
+          const isTrigger = index === 6 || index === 7;
+          if (isTrigger) {
+            let val = button.value < TRIGGER_DEADZONE ? 0 : button.value;
+            if (Math.abs(val - previousButtonStates[index]) > 0.02) {
+              previousButtonStates[index] = val;
+            }
+          } else {
+            const isPressed = button.pressed;
+
+            if (isPressed !== previousButtonStates[index] > 0) {
+              switch (index) {
+                case 0: // A
+                  if (isPressed) autoSet("down");
+                  break;
+                case 1: // B
+                  if (isPressed) autoSet("right");
+                  break;
+                case 2: // X
+                  if (isPressed) selectTool("rectangle");
+                  break;
+                case 3: // Y
+                  if (isPressed) selectTool("line");
+                  break;
+                case 4: // lb
+                  if (isPressed) {
+                    leftMouseClick = true;
+                    dispatchPointerEvent("pointerdown", 0);
+                  } else {
+                    leftMouseClick = false;
+                    dispatchPointerEvent("pointerup", 0);
+                    dispatchPointerEvent("click", 0);
+                  }
+                  break;
+                case 5: // rb
+                  if (isPressed) {
+                    rightMouseClick = true;
+                    dispatchPointerEvent("pointerdown", 2);
+                  } else {
+                    rightMouseClick = false;
+                    dispatchPointerEvent("pointerup", 2);
+                    dispatchPointerEvent("contextmenu", 2);
+                  }
+                  break;
+                case 8: // -
+                  if (isPressed) toggleSidebar();
+                  break;
+                case 9: // -
+                  if (isPressed) saveFile();
+                  break;
+                case 10: // L3
+                  if (isPressed) triggerUndo();
+                  break;
+                case 11: // R3
+                  if (isPressed) triggerRedo();
+                  break;
+                case 12:
+                  if (isPressed) {
+                    setPinned((prev) => {
+                      const next = !prev;
+                      toggleLockOnAllExceptFreedrawElements(next);
+                      return next;
+                    });
+                  }
+                  break;
+                case 13:
+                  if (isPressed) selectDirection("slide_down");
+                  break;
+                case 14: // D-pad Left
+                  if (isPressed) selectDirection("left");
+                  break;
+                case 15: // D-pad Right
+                  if (isPressed) selectDirection("right");
+                  break;
+              }
+            }
+            previousButtonStates[index] = isPressed ? 1 : 0;
+          }
+        });
+
+        // --- Right Joystick (Axes 2 & 3) for Virtual Mouse Movement ---
+        const rightStickX =
+          Math.abs(gp?.axes[2]) < AXIS_DEADZONE ? 0 : gp?.axes[2];
+        const rightStickY =
+          Math.abs(gp?.axes[3]) < AXIS_DEADZONE ? 0 : gp?.axes[3];
+
+        if (rightStickX !== 0 || rightStickY !== 0) {
+          virtualMouseX = Math.max(
+            0,
+            Math.min(
+              window.innerWidth,
+              virtualMouseX + rightStickX * MOUSE_SPEED,
+            ),
+          );
+          virtualMouseY = Math.max(
+            0,
+            Math.min(
+              window.innerHeight,
+              virtualMouseY + rightStickY * MOUSE_SPEED,
+            ),
+          );
+
+          if (cursorEl) {
+            cursorEl.style.left = `${virtualMouseX}px`;
+            cursorEl.style.top = `${virtualMouseY}px`;
+          }
+
+          dispatchPointerEvent("pointermove", 0);
+        }
+
+        // LT and RT Zoom (anchored on the virtual cursor)
+        const ltVal = gp.buttons[6]
+          ? gp.buttons[6].value < TRIGGER_DEADZONE
+            ? 0
+            : gp.buttons[6].value
+          : 0;
+        const rtVal = gp.buttons[7]
+          ? gp.buttons[7].value < TRIGGER_DEADZONE
+            ? 0
+            : gp.buttons[7].value
+          : 0;
+
+        if ((ltVal > 0 || rtVal > 0) && excalidrawAPI) {
+          const appState = excalidrawAPI.getAppState();
+          const { scrollX, scrollY, zoom } = appState;
+          const offsetLeft = appState.offsetLeft ?? 0;
+          const offsetTop = appState.offsetTop ?? 0;
+
+          const oldZoom = zoom.value;
+          const zoomSpeed = 0.02;
+          const newZoom = Math.max(
+            0.1,
+            Math.min(20, oldZoom + (rtVal - ltVal) * zoomSpeed),
+          );
+
+          if (newZoom !== oldZoom) {
+            // 1. Convert the virtual cursor from window coords -> canvas coords
+            const canvasX = virtualMouseX - offsetLeft;
+            const canvasY = virtualMouseY - offsetTop;
+
+            // 2. Scene point that is currently under the cursor
+            const sceneX = canvasX / oldZoom - scrollX;
+            const sceneY = canvasY / oldZoom - scrollY;
+
+            // 3. New scroll so that the same scene point stays under the cursor
+            const newScrollX = canvasX / newZoom - sceneX;
+            const newScrollY = canvasY / newZoom - sceneY;
+
+            excalidrawAPI.updateScene({
+              appState: {
+                zoom: { value: newZoom },
+                scrollX: newScrollX,
+                scrollY: newScrollY,
+              },
+              captureUpdate: CaptureUpdateAction.NEVER,
+            });
+          }
+        }
+
+        // Left Stick Panning
+        const leftStickX =
+          Math.abs(gp?.axes[0]) < AXIS_DEADZONE ? 0 : gp?.axes[0];
+        const leftStickY =
+          Math.abs(gp?.axes[1]) < AXIS_DEADZONE ? 0 : gp?.axes[1];
+
+        if ((leftStickX !== 0 || leftStickY !== 0) && excalidrawAPI) {
+          const currentAppState = excalidrawAPI.getAppState();
+          const zoomValue = currentAppState.zoom.value;
+          const panSpeed = 15 / zoomValue;
+
+          // Scene-space delta the viewport will move by this frame
+          const scrollDeltaX = -leftStickX * panSpeed;
+          const scrollDeltaY = -leftStickY * panSpeed;
+
+          const selectedElementIds = currentAppState.selectedElementIds || {};
+          const hasSelection = Object.keys(selectedElementIds).length > 0;
+
+          if (leftMouseClick && hasSelection) {
+            // Counter-translate selected elements so they stay pinned on screen.
+            // screen = (scene + scroll) * zoom  →  keep screen const while scroll
+            // changes by Δs  →  scene must change by -Δs.
+            const elements = excalidrawAPI.getSceneElements();
+
+            const newElements = elements.map((el) =>
+              selectedElementIds[el.id]
+                ? {
+                    ...el,
+                    x: el.x - scrollDeltaX,
+                    y: el.y - scrollDeltaY,
+                  }
+                : el,
+            );
+
+            excalidrawAPI.updateScene({
+              elements: newElements,
+              appState: {
+                ...currentAppState,
+                scrollX: currentAppState.scrollX + scrollDeltaX,
+                scrollY: currentAppState.scrollY + scrollDeltaY,
+              },
+              captureUpdate: CaptureUpdateAction.NEVER,
+            });
+          } else {
+            // Normal panning (no selection, or RB not held)
+            excalidrawAPI.updateScene({
+              appState: {
+                ...currentAppState,
+                scrollX: currentAppState.scrollX + scrollDeltaX,
+                scrollY: currentAppState.scrollY + scrollDeltaY,
+              },
+              captureUpdate: CaptureUpdateAction.NEVER,
+            });
+          }
+        }
+      }
+      animationFrameId = requestAnimationFrame(pollGamepads);
+    };
+
+    animationFrameId = requestAnimationFrame(pollGamepads);
+
+    checkExistingGamepads();
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("gamepadconnected", handleGamepadConnected);
+    window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("gamepadconnected", handleGamepadConnected);
+      window.removeEventListener(
+        "gamepaddisconnected",
+        handleGamepadDisconnected,
+      );
+      if (cursorEl) cursorEl.remove();
+      cancelAnimationFrame(animationFrameId);
+    };
   }, [excalidrawAPI]);
 
   return (
