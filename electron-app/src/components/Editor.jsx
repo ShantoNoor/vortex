@@ -64,10 +64,16 @@ const chunkWidth = 2000;
 const batchSize = 10;
 let ids = new Set([]);
 
+// sm: 16, md: 20, lg: 28, xl: 36,
 const initialData = {
   appState: {
     viewBackgroundColor: "#222",
-    currentItemStrokeColor: "#4dabf7",
+    currentItemStrokeColor: "#c2255ccc",
+    currentItemStrokeStyle: "solid",
+    currentItemRoughness: 0, //Sloppiness
+    currentItemRoundness: "sharp", //Edges
+    currentItemStrokeWidth: 2,
+    currentItemFontSize: 16
   },
 };
 
@@ -405,7 +411,7 @@ export const Editor = () => {
     excalidrawAPI.setToast({
       message: locked ? "Pinned" : "Unpinned",
       closable: true,
-      duration: 1000,
+      duration: 2000,
     });
   };
 
@@ -420,6 +426,12 @@ export const Editor = () => {
         };
       }),
       captureUpdate: CaptureUpdateAction.IMMEDIATELY,
+    });
+
+    excalidrawAPI.setToast({
+      message: locked ? "All Locked" : "All Unlocked",
+      closable: true,
+      duration: 2000,
     });
   };
 
@@ -882,7 +894,7 @@ export const Editor = () => {
 
     let virtualMouseX = window.innerWidth / 2;
     let virtualMouseY = window.innerHeight / 2;
-    const MOUSE_SPEED = 2;
+    const MOUSE_SPEED = 3;
 
     let cursorEl = document.getElementById("virtual-gamepad-cursor");
     if (!cursorEl) {
@@ -953,6 +965,11 @@ export const Editor = () => {
           previousButtonStates = new Array(gp.buttons.length).fill(0);
           previousAxisStates = new Array(gp.axes.length).fill(0);
           if (cursorEl) cursorEl.style.display = "block";
+          excalidrawAPI.setToast({
+            message: "Gamepad Connected!",
+            closable: true,
+            duration: 2000,
+          });
           break;
         }
       }
@@ -963,6 +980,11 @@ export const Editor = () => {
       previousButtonStates = new Array(e.gamepad.buttons.length).fill(0);
       previousAxisStates = new Array(e.gamepad.axes.length).fill(0);
       if (cursorEl) cursorEl.style.display = "block";
+      excalidrawAPI.setToast({
+        message: "Gamepad Connected!",
+        closable: true,
+        duration: 2000,
+      });
     };
 
     const handleGamepadDisconnected = (e) => {
@@ -971,6 +993,11 @@ export const Editor = () => {
         previousButtonStates = [];
         previousAxisStates = [];
         if (cursorEl) cursorEl.style.display = "none";
+        excalidrawAPI.setToast({
+          message: "Gamepad Disonnected!",
+          closable: true,
+          duration: 2000,
+        });
       }
     };
 
@@ -1017,10 +1044,6 @@ export const Editor = () => {
       // matching Excalidraw's keyboard shortcut behaviour (press "r" twice).
       const next =
         current === type && type !== "selection" ? "selection" : type;
-
-      if (next === "rectangle" || next === "line")
-        cursorEl.style.backgroundColor = "rgba(255, 0, 0, 0.9)";
-      else cursorEl.style.backgroundColor = "rgba(0, 0, 255, 0.8)";
 
       excalidrawAPI.setActiveTool({ type: next });
     };
