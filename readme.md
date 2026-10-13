@@ -105,7 +105,7 @@ The editor includes built-in gamepad support, enabling canvas navigation, tool s
 
 ### Joysticks & Navigation
 
-* **Left Stick:** Pans the canvas viewport. *(Note: If holding **LB** while elements are selected, the left stick moves the selected elements instead of panning).*
+* **Left Stick:** Pans the canvas viewport. *(Note: If holding **LB** while elements are selected, the left stick pans while the selected elements stay freezed).*
 * **Right Stick:** Controls the on-screen **virtual mouse cursor** for precise point-and-click interactions.
 
 ### Endpoint & Corner Editing Mode
