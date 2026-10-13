@@ -73,7 +73,7 @@ const initialData = {
     currentItemRoughness: 0, //Sloppiness
     currentItemRoundness: "sharp", //Edges
     currentItemStrokeWidth: 2,
-    currentItemFontSize: 16
+    currentItemFontSize: 16,
   },
 };
 
@@ -892,9 +892,15 @@ export const Editor = () => {
     const AXIS_DEADZONE = 0.15;
     const TRIGGER_DEADZONE = 0.05;
 
+    // --- endpoint editing ---
+    const ENDPOINT_SPEED = 4; // screen px per frame (divided by zoom)
+    const MIN_ELEMENT_SIZE = 1;
+    const ENDPOINT_EDITABLE_TYPES = ["line", "arrow", "rectangle"];
+    let endpointEditActive = false;
+
     let virtualMouseX = window.innerWidth / 2;
     let virtualMouseY = window.innerHeight / 2;
-    const MOUSE_SPEED = 3;
+    const MOUSE_SPEED = 2;
 
     let cursorEl = document.getElementById("virtual-gamepad-cursor");
     if (!cursorEl) {
@@ -935,6 +941,137 @@ export const Editor = () => {
       });
       target.dispatchEvent(event);
     };
+
+    /* ------------------------------------------------------------------ */
+    /*  Endpoint editing helpers                                          */
+    /* ------------------------------------------------------------------ */
+
+    // If exactly one line / arrow / rectangle is selected, return it.
+    const getEndpointEditTarget = () => {
+      if (!excalidrawAPI) return null;
+
+      const appState = excalidrawAPI.getAppState();
+
+      // Don't hijack the sticks while the user is mid-draw. During a
+      // multi-point line/arrow the element is technically "selected", but the
+      // user still needs the right stick to move the virtual mouse and place
+      // the next point.
+      if (
+        appState.newElement || // drag-drawing an element
+        appState.multiElement || // multi-point line/arrow being drawn
+        appState.editingLinearElement // editing an existing linear element
+      ) {
+        return null;
+      }
+
+      const selectedElementIds = appState.selectedElementIds || {};
+      const ids = Object.keys(selectedElementIds).filter(
+        (id) => selectedElementIds[id],
+      );
+      if (ids.length !== 1) return null;
+
+      const element = excalidrawAPI
+        .getSceneElements()
+        .find((el) => el.id === ids[0]);
+
+      if (!element || element.isDeleted) return null;
+      if (!ENDPOINT_EDITABLE_TYPES.includes(element.type)) return null;
+
+      return element;
+    };
+
+    // Returns a *new* element with one endpoint moved by (dx, dy) scene units.
+    //   "start" -> first point of a line/arrow  |  top-left of a rectangle
+    //   "end"   -> last point of a line/arrow   |  bottom-right of a rectangle
+    const withMovedEndpoint = (element, endpoint, dx, dy) => {
+      if (dx === 0 && dy === 0) return null;
+
+      const base = {
+        version: element.version + 1,
+        versionNonce: Math.floor(Math.random() * 1e9),
+        updated: Date.now(),
+      };
+
+      if (element.type === "line" || element.type === "arrow") {
+        const points = element.points;
+        if (!points || points.length < 2) return null;
+
+        const index = endpoint === "start" ? 0 : points.length - 1;
+
+        // 1) Compute the absolute scene position of every point after the move.
+        //    Only the targeted point (start or end) is translated; all other
+        //    points keep their original absolute position.
+        const absPoints = points.map((p, i) => [
+          element.x + p[0] + (i === index ? dx : 0),
+          element.y + p[1] + (i === index ? dy : 0),
+        ]);
+
+        // 2) Re-normalise so points[0] === [0, 0]. Excalidraw's linear elements
+        //    rely on this invariant — if it's violated the element gets dropped
+        //    from the scene, which is why the line/arrow seemed to disappear.
+        const newX = absPoints[0][0];
+        const newY = absPoints[0][1];
+        const newPoints = absPoints.map(([px, py]) => [px - newX, py - newY]);
+
+        const xs = newPoints.map((p) => p[0]);
+        const ys = newPoints.map((p) => p[1]);
+
+        return {
+          ...element,
+          ...base,
+          x: newX,
+          y: newY,
+          points: newPoints,
+          width: Math.max(...xs) - Math.min(...xs),
+          height: Math.max(...ys) - Math.min(...ys),
+        };
+      }
+
+      // ---- rectangle ----
+      if (endpoint === "start") {
+        // Clamp so the corner can never cross the opposite one.
+        const appliedDx = Math.min(dx, element.width - MIN_ELEMENT_SIZE);
+        const appliedDy = Math.min(dy, element.height - MIN_ELEMENT_SIZE);
+
+        return {
+          ...element,
+          ...base,
+          x: element.x + appliedDx,
+          y: element.y + appliedDy,
+          width: element.width - appliedDx,
+          height: element.height - appliedDy,
+        };
+      }
+
+      return {
+        ...element,
+        ...base,
+        width: Math.max(MIN_ELEMENT_SIZE, element.width + dx),
+        height: Math.max(MIN_ELEMENT_SIZE, element.height + dy),
+      };
+    };
+
+    const applyElementUpdate = (nextElement) => {
+      if (!excalidrawAPI || !nextElement) return;
+      const elements = excalidrawAPI.getSceneElements();
+      excalidrawAPI.updateScene({
+        elements: elements.map((el) =>
+          el.id === nextElement.id ? nextElement : el,
+        ),
+        captureUpdate:
+          CaptureUpdateAction.EVENTUALLY || CaptureUpdateAction.NEVER,
+      });
+    };
+
+    const deselectAllElements = () => {
+      if (!excalidrawAPI) return;
+      excalidrawAPI.updateScene({
+        appState: { selectedElementIds: {} },
+        captureUpdate: CaptureUpdateAction.NEVER,
+      });
+    };
+
+    /* ------------------------------------------------------------------ */
 
     const handleKeyDown = (e) => {
       const isTyping =
@@ -1053,6 +1190,9 @@ export const Editor = () => {
       if (activeGamepadIndex !== null && gamepads[activeGamepadIndex]) {
         const gp = gamepads[activeGamepadIndex];
 
+        // Is a single line / arrow / rectangle selected right now?
+        let endpointTarget = getEndpointEditTarget();
+
         gp?.buttons.forEach((button, index) => {
           const isTrigger = index === 6 || index === 7;
           if (isTrigger) {
@@ -1064,103 +1204,166 @@ export const Editor = () => {
             const isPressed = button.pressed;
 
             if (isPressed !== previousButtonStates[index] > 0) {
-              switch (index) {
-                case 0: // A
-                  if (isPressed) autoSet("down");
-                  break;
-                case 1: // B
-                  if (isPressed) autoSet("right");
-                  break;
-                case 2: // X
-                  if (isPressed) selectTool("rectangle");
-                  break;
-                case 3: // Y
-                  if (isPressed) selectTool("line");
-                  break;
-                case 4: // lb
-                  if (isPressed) {
-                    leftMouseClick = true;
-                    dispatchPointerEvent("pointerdown", 0);
-                  } else {
-                    leftMouseClick = false;
-                    dispatchPointerEvent("pointerup", 0);
-                    dispatchPointerEvent("click", 0);
-                  }
-                  break;
-                case 5: // rb
-                  if (isPressed) {
-                    rightMouseClick = true;
-                    dispatchPointerEvent("pointerdown", 2);
-                  } else {
-                    rightMouseClick = false;
-                    dispatchPointerEvent("pointerup", 2);
-                    dispatchPointerEvent("contextmenu", 2);
-                  }
-                  break;
-                case 8: // -
-                  if (isPressed) toggleSidebar();
-                  break;
-                case 9: // -
-                  if (isPressed) saveFile();
-                  break;
-                case 10: // L3
-                  if (isPressed) triggerUndo();
-                  break;
-                case 11: // R3
-                  if (isPressed) triggerRedo();
-                  break;
-                case 12:
-                  if (isPressed) {
-                    setPinned((prev) => {
-                      const next = !prev;
-                      toggleLockOnAllExceptFreedrawElements(next);
-                      return next;
-                    });
-                  }
-                  break;
-                case 13:
-                  if (isPressed) selectDirection("slide_down");
-                  break;
-                case 14: // D-pad Left
-                  if (isPressed) selectDirection("left");
-                  break;
-                case 15: // D-pad Right
-                  if (isPressed) selectDirection("right");
-                  break;
+              // While a line / rectangle is selected, any face button
+              // (A / B / X / Y) simply deselects it and hands the sticks
+              // back to panning / virtual-mouse duty.
+              if (isPressed && endpointTarget && index <= 3) {
+                deselectAllElements();
+                endpointTarget = null;
+              } else {
+                switch (index) {
+                  case 0: // A
+                    if (isPressed) autoSet("down");
+                    break;
+                  case 1: // B
+                    if (isPressed) autoSet("right");
+                    break;
+                  case 2: // X
+                    if (isPressed) selectTool("rectangle");
+                    break;
+                  case 3: // Y
+                    if (isPressed) selectTool("line");
+                    break;
+                  case 4: // lb
+                    if (isPressed) {
+                      leftMouseClick = true;
+                      dispatchPointerEvent("pointerdown", 0);
+                    } else {
+                      leftMouseClick = false;
+                      dispatchPointerEvent("pointerup", 0);
+                      dispatchPointerEvent("click", 0);
+                    }
+                    break;
+                  case 5: // rb
+                    if (isPressed) {
+                      rightMouseClick = true;
+                      dispatchPointerEvent("pointerdown", 2);
+                    } else {
+                      rightMouseClick = false;
+                      dispatchPointerEvent("pointerup", 2);
+                      dispatchPointerEvent("contextmenu", 2);
+                    }
+                    break;
+                  case 8: // -
+                    if (isPressed) toggleSidebar();
+                    break;
+                  case 9: // -
+                    if (isPressed) saveFile();
+                    break;
+                  case 10: // L3
+                    if (isPressed) triggerUndo();
+                    break;
+                  case 11: // R3
+                    if (isPressed) triggerRedo();
+                    break;
+                  case 12:
+                    if (isPressed) {
+                      setPinned((prev) => {
+                        const next = !prev;
+                        toggleLockOnAllExceptFreedrawElements(next);
+                        return next;
+                      });
+                    }
+                    break;
+                  case 13:
+                    if (isPressed) selectDirection("slide_down");
+                    break;
+                  case 14: // D-pad Left
+                    if (isPressed) selectDirection("left");
+                    break;
+                  case 15: // D-pad Right
+                    if (isPressed) selectDirection("right");
+                    break;
+                }
               }
             }
             previousButtonStates[index] = isPressed ? 1 : 0;
           }
         });
 
-        // --- Right Joystick (Axes 2 & 3) for Virtual Mouse Movement ---
+        // --- Sticks -------------------------------------------------------
         const rightStickX =
           Math.abs(gp?.axes[2]) < AXIS_DEADZONE ? 0 : gp?.axes[2];
         const rightStickY =
           Math.abs(gp?.axes[3]) < AXIS_DEADZONE ? 0 : gp?.axes[3];
 
-        if (rightStickX !== 0 || rightStickY !== 0) {
-          virtualMouseX = Math.max(
-            0,
-            Math.min(
-              window.innerWidth,
-              virtualMouseX + rightStickX * MOUSE_SPEED,
-            ),
-          );
-          virtualMouseY = Math.max(
-            0,
-            Math.min(
-              window.innerHeight,
-              virtualMouseY + rightStickY * MOUSE_SPEED,
-            ),
-          );
+        const leftStickX =
+          Math.abs(gp?.axes[0]) < AXIS_DEADZONE ? 0 : gp?.axes[0];
+        const leftStickY =
+          Math.abs(gp?.axes[1]) < AXIS_DEADZONE ? 0 : gp?.axes[1];
 
-          if (cursorEl) {
-            cursorEl.style.left = `${virtualMouseX}px`;
-            cursorEl.style.top = `${virtualMouseY}px`;
+        // Endpoint editing takes over the sticks while a line / rectangle is
+        // selected — unless LB is held (that keeps the "drag selection" and
+        // virtual-mouse behaviour available as an escape hatch).
+        const endpointEditMode = !!endpointTarget && !leftMouseClick;
+
+        if (endpointEditMode !== endpointEditActive) {
+          endpointEditActive = endpointEditMode;
+          if (endpointEditMode && excalidrawAPI) {
+            excalidrawAPI.setToast({
+              message:
+                "Endpoint mode — L-stick: start / top-left, R-stick: end / bottom-right. Any face button deselects.",
+              closable: true,
+              duration: 2500,
+            });
+          }
+        }
+
+        if (endpointEditMode) {
+          // const zoom = excalidrawAPI.getAppState().zoom?.value || 1;
+          const step = MOUSE_SPEED;
+          let next = endpointTarget;
+
+          // Left stick  -> start point (line) / top-left corner (rect)
+          if (leftStickX !== 0 || leftStickY !== 0) {
+            next =
+              withMovedEndpoint(
+                next,
+                "start",
+                leftStickX * step,
+                leftStickY * step,
+              ) || next;
           }
 
-          dispatchPointerEvent("pointermove", 0);
+          // Right stick -> end point (line) / bottom-right corner (rect)
+          if (rightStickX !== 0 || rightStickY !== 0) {
+            next =
+              withMovedEndpoint(
+                next,
+                "end",
+                rightStickX * step,
+                rightStickY * step,
+              ) || next;
+          }
+
+          if (next !== endpointTarget) {
+            applyElementUpdate(next);
+          }
+        } else {
+          // --- Right Joystick (Axes 2 & 3) for Virtual Mouse Movement ---
+          if (rightStickX !== 0 || rightStickY !== 0) {
+            virtualMouseX = Math.max(
+              0,
+              Math.min(
+                window.innerWidth,
+                virtualMouseX + rightStickX * MOUSE_SPEED,
+              ),
+            );
+            virtualMouseY = Math.max(
+              0,
+              Math.min(
+                window.innerHeight,
+                virtualMouseY + rightStickY * MOUSE_SPEED,
+              ),
+            );
+
+            if (cursorEl) {
+              cursorEl.style.left = `${virtualMouseX}px`;
+              cursorEl.style.top = `${virtualMouseY}px`;
+            }
+
+            dispatchPointerEvent("pointermove", 0);
+          }
         }
 
         // LT and RT Zoom (anchored on the virtual cursor)
@@ -1212,13 +1415,12 @@ export const Editor = () => {
           }
         }
 
-        // Left Stick Panning
-        const leftStickX =
-          Math.abs(gp?.axes[0]) < AXIS_DEADZONE ? 0 : gp?.axes[0];
-        const leftStickY =
-          Math.abs(gp?.axes[1]) < AXIS_DEADZONE ? 0 : gp?.axes[1];
-
-        if ((leftStickX !== 0 || leftStickY !== 0) && excalidrawAPI) {
+        // Left Stick Panning (skipped while editing endpoints)
+        if (
+          !endpointEditMode &&
+          (leftStickX !== 0 || leftStickY !== 0) &&
+          excalidrawAPI
+        ) {
           const currentAppState = excalidrawAPI.getAppState();
           const zoomValue = currentAppState.zoom.value;
           const panSpeed = 15 / zoomValue;

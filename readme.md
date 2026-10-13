@@ -74,6 +74,48 @@ yarn android
 | Ctrl + N | Auto set direction: Down | When not typing |
 | Ctrl + M | Auto set direction: Right | When not typing |
 
+## Controller & Gamepad Support
+
+The editor includes built-in gamepad support, enabling canvas navigation, tool selection, element alignment, and precise endpoint adjustments using a standard game controller (such as an Xbox or PlayStation controller).
+
+### Button Mappings
+
+| Button | Action |
+| :--- | :--- |
+| **A** | Auto-align/snap selected element **down** relative to the nearest neighbor |
+| **B** | Auto-align/snap selected element **right** relative to the nearest neighbor |
+| **X** | Select the **Rectangle** tool |
+| **Y** | Select the **Line** tool |
+| **Left Bumper (LB)** | Simulated **Left Mouse Click** (Hold to drag/move selected elements) |
+| **Right Bumper (RB)** | Simulated **Right Mouse Click** (Context Menu) |
+| **Left / Right Trigger (LT / RT)** | Zoom **Out** / Zoom **In** (anchored to the virtual cursor position) |
+| **View / Back (Index 8)** | Toggle Sidebar |
+| **Menu / Start (Index 9)** | Save current scene |
+| **Left Stick Click (L3)** | Undo |
+| **Right Stick Click (R3)** | Redo |
+
+### D-Pad Mappings
+
+| D-Pad Direction | Action |
+| :--- | :--- |
+| **Up** | Toggle Pin (Lock/Unlock all elements except freedraw) |
+| **Down** | Slide Down selection direction |
+| **Left** | Left selection direction |
+| **Right** | Right selection direction |
+
+### Joysticks & Navigation
+
+* **Left Stick:** Pans the canvas viewport. *(Note: If holding **LB** while elements are selected, the left stick moves the selected elements instead of panning).*
+* **Right Stick:** Controls the on-screen **virtual mouse cursor** for precise point-and-click interactions.
+
+### Endpoint & Corner Editing Mode
+
+When you select **exactly one** line, arrow, or rectangle, the controller switches to **Endpoint Editing Mode**, repurposing the analog sticks for structural adjustments without dragging handles:
+
+* **Left Stick:** Adjusts the **Start Point** (for lines/arrows) or the **Top-Left Corner** (for rectangles).
+* **Right Stick:** Adjusts the **End Point** (for lines/arrows) or the **Bottom-Right Corner** (for rectangles).
+* **Any Face Button (A, B, X, Y):** Exits endpoint editing mode and deselects the element.
+
 ## Fedora Linux Build Issue Solve:
 
 > https://github.com/electron/forge/issues/3701
