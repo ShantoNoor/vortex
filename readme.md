@@ -98,9 +98,9 @@ The editor includes built-in gamepad support, enabling canvas navigation, tool s
 
 | D-Pad Direction | Action |
 | :--- | :--- |
-| **Up** | Toggle Pin (Lock/Unlock all elements except freedraw) |
+| **Up** | Press and Hold to increase the vitrual mouse speed |
 | **Down** | Slide Down selection direction |
-| **Left** | Left selection direction |
+| **Left** | Toggle Pin (Lock/Unlock all elements except freedraw) |
 | **Right** | Right selection direction |
 
 ### Joysticks & Navigation

@@ -900,7 +900,7 @@ export const Editor = () => {
 
     let virtualMouseX = window.innerWidth / 2;
     let virtualMouseY = window.innerHeight / 2;
-    const MOUSE_SPEED = 2;
+    let MOUSE_SPEED = 2;
 
     let cursorEl = document.getElementById("virtual-gamepad-cursor");
     if (!cursorEl) {
@@ -1094,6 +1094,26 @@ export const Editor = () => {
       }
     };
 
+    const triggerRumble = async (
+      gp,
+      durationMs = 200,
+      strongMagnitude = 0.5,
+      weakMagnitude = 0.5,
+    ) => {
+      if (gp && gp.vibrationActuator) {
+        try {
+          await gp.vibrationActuator.playEffect("dual-rumble", {
+            startDelay: 0,
+            duration: durationMs,
+            weakMagnitude: weakMagnitude,
+            strongMagnitude: strongMagnitude,
+          });
+        } catch (err) {
+          console.warn("Vibration not supported or failed:", err);
+        }
+      }
+    };
+
     const checkExistingGamepads = () => {
       const gamepads = navigator.getGamepads();
       for (const gp of gamepads) {
@@ -1102,6 +1122,7 @@ export const Editor = () => {
           previousButtonStates = new Array(gp.buttons.length).fill(0);
           previousAxisStates = new Array(gp.axes.length).fill(0);
           if (cursorEl) cursorEl.style.display = "block";
+          triggerRumble(gp, 400, 1.0, 0.8);
           excalidrawAPI.setToast({
             message: "Gamepad Connected!",
             closable: true,
@@ -1117,6 +1138,7 @@ export const Editor = () => {
       previousButtonStates = new Array(e.gamepad.buttons.length).fill(0);
       previousAxisStates = new Array(e.gamepad.axes.length).fill(0);
       if (cursorEl) cursorEl.style.display = "block";
+      triggerRumble(e.gamepad, 400, 1.0, 0.8);
       excalidrawAPI.setToast({
         message: "Gamepad Connected!",
         closable: true,
@@ -1256,7 +1278,14 @@ export const Editor = () => {
                   case 11: // R3
                     if (isPressed) triggerRedo();
                     break;
-                  case 12:
+                  case 12: // D-pad up
+                    if (isPressed) MOUSE_SPEED = 15;
+                    else MOUSE_SPEED = 2;
+                    break;
+                  case 13: // D-pad down
+                    if (isPressed) selectDirection("slide_down");
+                    break;
+                  case 14: // D-pad Left
                     if (isPressed) {
                       setPinned((prev) => {
                         const next = !prev;
@@ -1265,14 +1294,21 @@ export const Editor = () => {
                       });
                     }
                     break;
-                  case 13:
-                    if (isPressed) selectDirection("slide_down");
-                    break;
-                  case 14: // D-pad Left
-                    if (isPressed) selectDirection("left");
-                    break;
                   case 15: // D-pad Right
                     if (isPressed) selectDirection("right");
+                    break;
+                  case 16:
+                    if (isPressed) {
+                      triggerRumble(gp, 200, 0.75, 0.5);
+
+                      if (excalidrawAPI) {
+                        excalidrawAPI.setToast({
+                          message: "Yo!",
+                          closable: true,
+                          duration: 1500,
+                        });
+                      }
+                    }
                     break;
                 }
               }
