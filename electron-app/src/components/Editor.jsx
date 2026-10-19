@@ -893,7 +893,6 @@ export const Editor = () => {
     const TRIGGER_DEADZONE = 0.05;
 
     // --- endpoint editing ---
-    const ENDPOINT_SPEED = 4; // screen px per frame (divided by zoom)
     const MIN_ELEMENT_SIZE = 1;
     const ENDPOINT_EDITABLE_TYPES = ["line", "arrow", "rectangle"];
     let endpointEditActive = false;
@@ -1123,7 +1122,7 @@ export const Editor = () => {
           previousAxisStates = new Array(gp.axes.length).fill(0);
           if (cursorEl) cursorEl.style.display = "block";
           triggerRumble(gp, 400, 1.0, 0.8);
-          excalidrawAPI.setToast({
+          excalidrawAPI?.setToast({
             message: "Gamepad Connected!",
             closable: true,
             duration: 2000,
@@ -1139,7 +1138,7 @@ export const Editor = () => {
       previousAxisStates = new Array(e.gamepad.axes.length).fill(0);
       if (cursorEl) cursorEl.style.display = "block";
       triggerRumble(e.gamepad, 400, 1.0, 0.8);
-      excalidrawAPI.setToast({
+      excalidrawAPI?.setToast({
         message: "Gamepad Connected!",
         closable: true,
         duration: 2000,
@@ -1152,7 +1151,7 @@ export const Editor = () => {
         previousButtonStates = [];
         previousAxisStates = [];
         if (cursorEl) cursorEl.style.display = "none";
-        excalidrawAPI.setToast({
+        excalidrawAPI?.setToast({
           message: "Gamepad Disonnected!",
           closable: true,
           duration: 2000,
@@ -1279,7 +1278,7 @@ export const Editor = () => {
                     if (isPressed) triggerRedo();
                     break;
                   case 12: // D-pad up
-                    if (isPressed) MOUSE_SPEED = 15;
+                    if (isPressed) MOUSE_SPEED = 10;
                     else MOUSE_SPEED = 2;
                     break;
                   case 13: // D-pad down
@@ -1301,13 +1300,11 @@ export const Editor = () => {
                     if (isPressed) {
                       triggerRumble(gp, 200, 0.75, 0.5);
 
-                      if (excalidrawAPI) {
-                        excalidrawAPI.setToast({
-                          message: "Yo!",
-                          closable: true,
-                          duration: 1500,
-                        });
-                      }
+                      excalidrawAPI?.setToast({
+                        message: "If you want to shine like a sun, first burn like a sun!",
+                        closable: true,
+                        duration: 1500,
+                      });
                     }
                     break;
                 }
